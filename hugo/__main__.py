@@ -24,4 +24,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "2017.8.0"
+import os
+import urllib.parse
+
+from hugo.bot import Bot
+from hugo.groups.status import Status
+
+
+hugo = Bot("Hugo", allow_slash_commands=True)
+token = os.environ.get("DISCORD_BOT_TOKEN")
+
+hugo.add_group(Status())
+hugo.run(token)

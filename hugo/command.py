@@ -27,7 +27,7 @@ SOFTWARE.
 import asyncio
 import inspect
 import re
-
+from functools import partial
 from typing import (
     List,
     Optional,
@@ -38,43 +38,83 @@ from hugo import exceptions
 
 
 class Command:
-    def __init__(self, slug: str, templates: List[str], callback,
+    def __init__(self, slug: str, callback, slashes: List[str],
+                 templates: Optional[List[str]]=None,
                  short_description: Optional[str]=None,
-                 long_description: Optional[str]=None, is_active: bool=True):
+                 long_description: Optional[str]=None,
+                 private_messages: bool=True,
+                 server_messages: bool=True):
         if not isinstance(slug, str):
             raise TypeError("Slug must be a string")
 
         if not asyncio.iscoroutinefunction(callback):
-            raise TypeError('Callback must be a coroutine')
+            raise TypeError("Callback must be a coroutine")
 
         self.slug = slug
-        self.templates = templates
-        self.compiled = []
         self.callback = callback
+        self.slashes = slashes
+        self.templates = templates if templates is not None else []
+        self.compiled_slashes = []
+        self.compiled_templates = []
         self.short_description = short_description
         self.long_description = long_description
-        self.is_active = is_active
+        self.private_messages = private_messages
+        self.server_messages = server_messages
 
-        # If callback is a class method, we should provide an instance
-        # to the callback
-        self.instance = None
+        self._compile()
 
-        for template in templates:
-            self.compiled.append(re.compile(fr"^\s*{template}(\s.*)*$"))
+    def add_slash(self, slash):
+        """Adds a new slash to the command."""
+        self.slashes.append(slash)
+        self.compiled_slashes.append(self.compile_slash(slash))
 
-    def __get__(self, instance, owner):
-        # TODO: We should provide a more flexible version...
-        # What if two bots in one Python proccess will run? Ik.
-        if instance is not None:
-            self.instance = instance
-        return self
+    def add_template(self, template):
+        """Adds a new template to the command."""
+        self.templates.append(template)
+        self.compiled_templates.append(self.compile_template(template))
 
-    async def invoke(self, ctx, *args, **kwargs):
+    def remove_slash(self, slash):
+        """Removes the slash from the command."""
+        self.slashes.remove(slash)
+        self.recompile()
+
+    def remove_template(self, template):
+        """Removes the template from the command."""
+        self.templates.remove(template)
+        self.recompile()
+
+    @staticmethod
+    def compile_slash(slash):
+        return re.compile(fr"^\s*{slash}(\s.*)*$")
+
+    @staticmethod
+    def compile_template(template):
+        return re.compile(fr"^\s*{template}(\s.*)*$")
+
+    def _compile_slashes(self):
+        for slash in self.slashes:
+            self.compiled_slashes.append(self.compile_slash(slash))
+
+    def _compile_templates(self):
+        for template in self.templates:
+            self.compiled_templates.append(self.compile_template(template))
+
+    def _compile(self):
+        self._compile_slashes()
+        self._compile_templates()
+
+    def recompile(self):
+        self.compiled_slashes = []
+        self.compiled_templates = []
+        self._compile()
+
+    async def __call__(self, *args, **kwargs):
         """Invokes callback with given parameters."""
-        if self.instance is not None:
-            await self.callback(self.instance, *args, ctx=ctx, **kwargs)
-        else:
-            await self.callback(*args, ctx=ctx, **kwargs)
+        return await self.invoke(*args, **kwargs)
+
+    async def invoke(self, *args, **kwargs):
+        """Invokes callback with given parameters."""
+        return await self.callback(*args, **kwargs)
 
 
 class Group:
@@ -85,10 +125,10 @@ class Group:
         self.long_description = long_description
 
         self.subgroups = []
-        self.commands = {}
+        self.commands = []
 
         for name, member in inspect.getmembers(self):
-            if isinstance(member, Command):
+            if is_command(member):
                 self.add_command(member)
 
     def add_subgroup(self, group):
@@ -100,57 +140,66 @@ class Group:
         self.subgroups.append(group)
 
     def remove_subgroup(self, group):
-        """Removes a subgroup from the group."""
-        if not isinstance(group, Group):
-            raise TypeError("Provided group is not a Group instance")
+        """Removes the subgroup from the group."""
         self.subgroups.remove(group)
 
-    def add_command(self, command: Command):
+    def add_command(self, callback):
         """Adds a command to the group."""
-        if not isinstance(command, Command):
-            raise TypeError("Provided command is not a Command instance")
-        if command.slug in self.commands:
+        if not is_command(callback):
+            raise TypeError("Provided callback is not a command")
+        if callback in self.commands:
             raise ValueError("Command is added yet")
-        self.commands[command.slug] = command
+        self.commands.append(callback)
 
-    def remove_command(self, command: Union[str, Command]):
-        """Removes a command from the group."""
-        if isinstance(command, Command):
-            command = command.slug
-        if not isinstance(command, str):
-            raise TypeError("Provided command is not a Command instance or "
-                            "command slug")
-        return self.commands.pop(command, None)
+    def remove_command(self, callback):
+        """Removes the command from the group."""
+        self.commands.remove(callback)
 
     @property
     def flatten(self):
         """Returns a list of all commands in group and subgroups."""
-        for command in self.commands.values():
+        for command in self.commands:
             yield command
         for subgroup in self.subgroups:
             yield from subgroup.flatten
 
 
+def is_command(callback):
+    """Checks is given callback a Command."""
+    if not isinstance(getattr(callback, "command", None), Command):
+        return False
+    return True
+
+
 def group(group: Group):
     """Group decorator for commands."""
-    def decorator(command: Command):
-        if not isinstance(command, Command):
-            raise TypeError("Callback must be transformed to the Command "
-                            "instance before this decorator can be used")
-        group.add_command(command)
-        return command
+    def decorator(callback):
+        if not is_command(callback):
+            raise TypeError("Callback must be transformed to the command "
+                            "before this decorator can be used")
+        group.add_command(callback)
+        return callback
     return decorator
 
 
-def command(slug: str, templates: List[str],
+def command(slug: str, slashes: List[str], templates: Optional[List[str]]=None,
             short_description: Optional[str]=None,
-            long_description: Optional[str]=None, is_active: bool=True):
+            long_description: Optional[str]=None,
+            private_messages: bool=True, server_messages: bool=True):
     """Command decorator."""
     def decorator(callback):
-        return Command(slug=slug,
-                       templates=templates,
-                       callback=callback,
-                       short_description=short_description,
-                       long_description=long_description,
-                       is_active=is_active)
+        command = Command(slug=slug,
+                          callback=callback,
+                          slashes=slashes,
+                          templates=templates,
+                          short_description=short_description,
+                          long_description=long_description,
+                          private_messages=private_messages,
+                          server_messages=server_messages)
+
+        async def wrapper(*args, **kwargs):
+            return await command.invoke(*args, **kwargs)
+
+        wrapper.command = command
+        return wrapper
     return decorator

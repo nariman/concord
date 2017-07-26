@@ -40,7 +40,7 @@ tests_requires = content("requirements-test.txt", splitlines=True)
 setup(
     name="Hugo",
     description="Discord Bot",
-    version="2017.7.0",
+    version="2017.8.0",
     url="discord.com",
 
     author="woofilee",

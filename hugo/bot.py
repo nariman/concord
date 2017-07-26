@@ -24,7 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from itertools import chain
+
 import discord
+import pendulum
 
 from hugo.command import (
     Command,
@@ -33,11 +36,12 @@ from hugo.command import (
 
 
 class Bot(discord.Client, Group):
-    def __init__(self, name, *, loop=None, **options):
+    def __init__(self, name, *, allow_slash_commands=False, loop=None, **options):
         discord.Client.__init__(self, loop=loop, **options)
         Group.__init__(self, name)
 
         self.name = name
+        self.allow_slash_commands = allow_slash_commands
 
         self.add_group = self.add_subgroup
         self.remove_group = self.remove_subgroup
@@ -55,7 +59,6 @@ class Bot(discord.Client, Group):
         for mention in self.bot_mentions(message):
             if message.content.startswith(mention):
                 return True
-
         return False
 
     def remove_bot_mention(self, content: str):
@@ -64,34 +67,66 @@ class Bot(discord.Client, Group):
                 return content[len(mention):]
         return content
 
-    @staticmethod
-    def is_authored_by_bot(message: discord.Message):
-        return message.author.bot
+    async def on_ready(self):
+        if not hasattr(self, "uptime"):
+            self.uptime = pendulum.utcnow()
 
-    async def on_message(self, message: discord.Message):
-        if (not self.is_bot_mentioned(message) or
-                self.is_authored_by_bot(message)):
-            return
+    async def _proccess_message(self, message: discord.Message, 
+                                is_slash: bool=False):
+        content = message.content
+        if is_slash:
+            content = content[1:]
+        else:
+            content = self.remove_bot_mention(content)
 
-        content = self.remove_bot_mention(message.content)
+        for callback in self.flatten:
+            if (message.channel.is_private 
+                and not callback.command.private_messages):
+                continue
+            if (not message.channel.is_private 
+                and not callback.command.server_messages):
+                continue
 
-        for command in self.flatten:
-            for template, compiled in zip(command.templates, command.compiled):
+            raws = callback.command.slashes
+            compiled = callback.command.compiled_slashes
+
+            if not is_slash:
+                raws = chain(raws, callback.command.templates)
+                compiled = chain(compiled, callback.command.compiled_templates)
+
+            for raw, compiled in zip(raws, compiled):
                 match = compiled.match(content)
 
                 if match:
-                    ctx = Context(self, message, template, match)
-                    await ctx.invoke(command, **match.groupdict())
+                    await self.send_typing(message.channel)
+                    ctx = Context(self, message, callback, match, 
+                                  is_slash=is_slash)
+                    await callback(ctx=ctx, **match.groupdict())
                     return
+
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
+        if self.allow_slash_commands and message.content.startswith("/"):
+            await self._proccess_message(message, is_slash=True)
+        elif self.is_bot_mentioned(message):
+            await self._proccess_message(message, is_slash=False)
+        return
 
 
 class Context:
-    def __init__(self, bot: Bot, message, template: str, match):
+    def __init__(self, bot: Bot, message: discord.Message, callback, match,
+                 is_slash=False):
         self.bot = bot
         self.message = message
-        self.template = template
+        self.callback = callback
         self.match = match
+        self.is_slash = is_slash
 
-    async def invoke(self, command: Command, *args, **kwargs):
-        """Invokes callback with given parameters."""
-        await command.invoke(self, *args, **kwargs)
+    @property
+    def command(self):
+        return self.callback.command
+
+    async def send_message(self, *args, **kwargs):
+        return await self.bot.send_message(self.message.channel, *args, **kwargs)
