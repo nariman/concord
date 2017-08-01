@@ -29,6 +29,7 @@ import pendulum
 
 import hugo
 from hugo.command import (
+    Template,
     Group,
     command,
     group
@@ -41,8 +42,8 @@ class Status(Group):
         super().__init__("Status", "Technical information about the bot")
 
     @command(slug="status",
-             slashes=[
-                 r"status",
+             templates=[
+                 Template(r"status", allow_short_mention=True),
              ],
              short_description="Bot status",
              long_description="",

@@ -31,7 +31,7 @@ from hugo.bot import Bot
 from hugo.groups.status import Status
 
 
-hugo = Bot("Hugo", allow_slash_commands=True)
+hugo = Bot("Hugo", allow_short_mention=True)
 token = os.environ.get("DISCORD_BOT_TOKEN")
 
 hugo.add_group(Status())

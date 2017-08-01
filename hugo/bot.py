@@ -24,60 +24,82 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import sys
 from itertools import chain
 
 import discord
 import pendulum
 
 from hugo.command import (
+    Template,
     Command,
     Group
 )
 
 
+class Mention:
+    def __init__(self, mention, is_short=False):
+        self.mention = mention
+        self.is_short = is_short
+
+    def match(self, message: discord.Message):
+        if message.content.startswith(self.mention):
+            return True
+        return False
+
+    def __str__(self):
+        return self.mention
+
+
 class Bot(discord.Client, Group):
-    def __init__(self, name, *, allow_slash_commands=False, loop=None, **options):
+    def __init__(self, name, *, allow_short_mention=False, 
+                 respond_to_bot_messages=False, loop=None, **options):
         discord.Client.__init__(self, loop=loop, **options)
         Group.__init__(self, name)
 
+        self.initialized = False
+
         self.name = name
-        self.allow_slash_commands = allow_slash_commands
+        self.allow_short_mention = allow_short_mention
+        self.respond_to_bot_messages = respond_to_bot_messages
+
+        self.bot_mentions = [Mention("/", is_short=True)]
+        self.bot_mentions.extend(self.format_mentions_by_name(self.name))
 
         self.add_group = self.add_subgroup
         self.remove_group = self.remove_subgroup
 
-    def bot_mentions(self, message: discord.Message=None):
-        """Returns all allowed bot mentions."""
-        me = (self.user if message is None or message.server is None
-              else message.server.me)
+    @staticmethod
+    def format_mentions_by_name(name):
         return [
-            f"{self.name} ", f"{self.name},",
-            f"{me.mention} ", f"{me.mention},",
+            Mention(f"{name} "), Mention(f"{name},")
         ]
 
-    def is_bot_mentioned(self, message: discord.Message):
-        for mention in self.bot_mentions(message):
-            if message.content.startswith(mention):
-                return True
-        return False
-
-    def remove_bot_mention(self, content: str):
-        for mention in self.bot_mentions():
-            if content.startswith(mention):
-                return content[len(mention):]
-        return content
+    def detect_bot_mention(self, message: discord.Message):
+        for mention in self.bot_mentions:
+            if mention.is_short and not self.allow_short_mention:
+                continue
+            if mention.match(message):
+                return mention
+        return None
 
     async def on_ready(self):
-        if not hasattr(self, "uptime"):
+        if not self.initialized:
             self.uptime = pendulum.utcnow()
+            self.bot_mentions.extend(
+                self.format_mentions_by_name(self.user.mention))
 
-    async def _proccess_message(self, message: discord.Message, 
-                                is_slash: bool=False):
-        content = message.content
-        if is_slash:
-            content = content[1:]
-        else:
-            content = self.remove_bot_mention(content)
+            self.initialized = True
+
+    async def on_message(self, message: discord.Message):
+        if message.author.bot and not self.respond_to_bot_messages:
+            return
+
+        mention = self.detect_bot_mention(message)
+        if mention is None:
+            return
+
+        content = message.content[len(str(mention)):]
 
         for callback in self.flatten:
             if (message.channel.is_private 
@@ -87,46 +109,50 @@ class Bot(discord.Client, Group):
                 and not callback.command.server_messages):
                 continue
 
-            raws = callback.command.slashes
-            compiled = callback.command.compiled_slashes
-
-            if not is_slash:
-                raws = chain(raws, callback.command.templates)
-                compiled = chain(compiled, callback.command.compiled_templates)
-
-            for raw, compiled in zip(raws, compiled):
-                match = compiled.match(content)
+            for template in callback.command.templates:
+                if mention.is_short and not template.allow_short_mention:
+                    continue
+                match = template.compiled.match(content)
 
                 if match:
                     await self.send_typing(message.channel)
-                    ctx = Context(self, message, callback, match, 
-                                  is_slash=is_slash)
-                    await callback(ctx=ctx, **match.groupdict())
+                    ctx = Context(self, message, callback, mention, template, 
+                                  match)
+
+                    try:
+                        await callback(ctx=ctx, **match.groupdict())
+                    except:
+                        await ctx.send_message("Error during processing your request")
+                        await ctx.send_message(sys.exc_info()[0])
                     return
-
-    async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
-
-        if self.allow_slash_commands and message.content.startswith("/"):
-            await self._proccess_message(message, is_slash=True)
-        elif self.is_bot_mentioned(message):
-            await self._proccess_message(message, is_slash=False)
-        return
 
 
 class Context:
-    def __init__(self, bot: Bot, message: discord.Message, callback, match,
-                 is_slash=False):
+    def __init__(self, bot: Bot, message: discord.Message, callback, 
+                 mention: Mention, template: Template, match):
         self.bot = bot
         self.message = message
         self.callback = callback
+        self.mention = mention
+        self.template = template
         self.match = match
-        self.is_slash = is_slash
 
     @property
     def command(self):
         return self.callback.command
 
+    @property
+    def author(self):
+        return self.message.author
+
+    @property
+    def server(self):
+        return self.message.server
+
+    @property
+    def channel(self):
+        return self.message.channel
+
     async def send_message(self, *args, **kwargs):
-        return await self.bot.send_message(self.message.channel, *args, **kwargs)
+        return await self.bot.send_message(self.message.channel, *args, 
+                                           **kwargs)
