@@ -3,7 +3,7 @@ Hugo - Discord Bot
 
 MIT License
 
-Copyright (c) 2017 woofilee
+Copyright (c) 2017-2018 Nariman Safiulin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -121,9 +121,8 @@ class Bot(discord.Client, Group):
 
                     try:
                         await callback(ctx=ctx, **match.groupdict())
-                    except:
-                        await ctx.send_message("Error during processing your request")
-                        await ctx.send_message(sys.exc_info()[0])
+                    except Exception as e:
+                        await ctx.send_message(str(e))
                     return
 
 

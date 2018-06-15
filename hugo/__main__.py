@@ -3,7 +3,7 @@ Hugo - Discord Bot
 
 MIT License
 
-Copyright (c) 2017 woofilee
+Copyright (c) 2017-2018 Nariman Safiulin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,11 +28,13 @@ import os
 import urllib.parse
 
 from hugo.bot import Bot
+from hugo.groups.roles import Roles
 from hugo.groups.status import Status
 
 
 hugo = Bot("Hugo", allow_short_mention=True)
 token = os.environ.get("DISCORD_BOT_TOKEN")
 
+hugo.add_group(Roles())
 hugo.add_group(Status())
 hugo.run(token)

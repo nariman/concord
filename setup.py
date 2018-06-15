@@ -3,7 +3,7 @@ Hugo - Discord Bot
 
 MIT License
 
-Copyright (c) 2017 woofilee
+Copyright (c) 2017-2018 Nariman Safiulin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ setup(
     version="2017.8.1",
     url="discord.com",
 
-    author="woofilee",
+    author="Nariman Safiulin",
     author_email="",
 
     license="MIT",
