@@ -40,6 +40,11 @@ class Middleware(abc.ABC):
         ----------
         ctx : context.Context
             Discord message processing context.
+
+            .. note:
+                Provided context can be replaced and passed to the next
+                middleware, but do it only if needed.
+
         next : callable
             The next function to call. Not necessarily a middleware. Pass
             context and all positional and keyword arguments, even if unused.
@@ -89,6 +94,8 @@ class MiddlewareChain(Middleware):
                     ctx, next, *args, **kwargs
                 )
             )(current, next)
+
+        return await next(ctx, *args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
         """Invokes last middleware with given parameters.
