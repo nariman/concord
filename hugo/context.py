@@ -30,5 +30,3 @@ class Context:
     def __init__(self, bot, message: discord.Message):
         self.bot = bot
         self.message = message
-        self.args = []
-        self.kwargs = {}

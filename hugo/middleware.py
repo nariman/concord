@@ -27,7 +27,7 @@ from . import context
 
 
 class Middleware(abc.ABC):
-    """Discord message processing middleware.
+    """Event processing middleware.
 
     Middleware are useful for filtering events or extending functionality.
     """
@@ -73,22 +73,40 @@ class MiddlewareFunction(Middleware):
         return await self.fn(*args, **kwargs)
 
 
-class MiddlewareChain(Middleware):
+class MiddlewareCollection:
+    """Class for process list of middleware in some order and rules.
+
+    Attributes
+    ----------
+    collection : list[Middleware]
+        List of middleware.
+    """
+
+    def __init__(self):
+        self.collection = []
+
+    def add_middleware(self, middleware):
+        """Add middleware to the list."""
+        self.collection.append(middleware)
+
+
+class MiddlewareChain(Middleware, MiddlewareCollection):
     """Class for chaining middleware. It's a middleware itself.
 
     Attributes
     ----------
-    chain : list[Middleware]
+    collection : list[Middleware]
         List of middleware to run in a certain order. The first items is a
         last-to-call middleware (in other words, list is reversed).
     """
 
     def __init__(self, middleware: Middleware):
-        self.chain = [middleware]
+        super().__init__()
+        self.add_middleware(middleware)
 
     async def run(self, ctx: context.Context, next, *args, **kwargs):
         # Oh dear! Please, rewrite it...
-        for current in self.chain:
+        for current in self.collection:
             next = (
                 lambda current, next: lambda ctx, *args, **kwargs: current.run(
                     ctx, next, *args, **kwargs
@@ -101,11 +119,42 @@ class MiddlewareChain(Middleware):
         """Invokes last middleware with given parameters.
 
         It makes sense only if last middleware is a wrapped function."""
-        return await self.chain[0](*args, **kwargs)
+        return await self.collection[0](*args, **kwargs)
+
+
+class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
+    """Class for grouping middleware. It's a middleware itself.
+
+    Method `run` is abstract. Each subclass should implement own behavior of how
+    to run group of middleware. For example, run only one middleware, if
+    success, or run all middleware, or run middleware until desired results is
+    obtained, etc. Useful, when it's known, what middleware can return.
+
+    Method `__call__` is abstract as well.
+
+    Attributes
+    ----------
+    collection : list[Middleware]
+        List of middleware to run. Take a note that middleware will be run in
+        the order of they're in the list.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    @abc.abstractmethod
+    async def run(self, ctx: context.Context, next, *args, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    async def __call__(self, *args, **kwargs):
+        pass
 
 
 def as_middleware(fn):
     """Wrap function into a middleware."""
+    if isinstance(fn, Middleware):
+        raise ValueError("Already a middleware.")
     return MiddlewareFunction(fn)
 
 
@@ -132,7 +181,7 @@ def middleware(outer_middleware: Middleware):
         else:
             middleware_chain = MiddlewareChain(inner_middleware)
 
-        middleware_chain.chain.append(outer_middleware)
+        middleware_chain.add_middleware(outer_middleware)
         return middleware_chain
     # fmt: on
 

@@ -132,6 +132,23 @@ class TestMiddleware:
 
         assert await mw(sample_ctx, None, *sample_args, **sample_kwargs) == 42
 
+    def test_middleware_collection(self):
+        """Test middleware collection class."""
+
+        @middleware.as_middleware
+        async def first_middleware(ctx, _next, *args, **kwargs):
+            pass
+
+        @middleware.as_middleware
+        async def second_middleware(ctx, _next, *args, **kwargs):
+            pass
+
+        mc = middleware.MiddlewareCollection()
+        mc.add_middleware(first_middleware)
+        mc.add_middleware(second_middleware)
+
+        assert set(mc.collection) == set([first_middleware, second_middleware])
+
     @pytest.mark.asyncio
     async def test_middleware_chain(self, sample):
         """Test middleware chaining."""
@@ -154,7 +171,7 @@ class TestMiddleware:
             return 42
 
         chain = middleware.MiddlewareChain(first_middleware)
-        chain.chain.append(second_middleware)
+        chain.add_middleware(second_middleware)
 
         # fmt: off
         assert await chain.run(
@@ -195,6 +212,7 @@ class TestMiddleware:
     async def test_middleware_chain_decorator_constraints(self, sample):
         """Test that middleware chaining decorator applies only `Middleware`
         instances."""
+
         async def not_wrapped_middleware():
             pass
 
@@ -202,7 +220,6 @@ class TestMiddleware:
 
         with pytest.raises(ValueError):
             middleware.middleware(not_wrapped_middleware)(wrapped_middleware)
-
         with pytest.raises(ValueError):
             middleware.middleware(wrapped_middleware)(not_wrapped_middleware)
 
@@ -229,8 +246,22 @@ class TestMiddleware:
 
             return 1
 
+        assert isinstance(first_middleware, middleware.MiddlewareChain)
         # fmt: off
         assert await first_middleware(
             sample_ctx, None, *sample_args, **sample_kwargs
         ) == 1
         # fmt: on
+
+    def test_middleware_group_class_is_abstract(self):
+        """Test that middleware group subclass should implement methods.
+
+        Class itself has no code to test, functionality can be tested on
+        subclasses.
+        """
+
+        class SomeGroup(middleware.MiddlewareGroup):
+            pass
+
+        with pytest.raises(TypeError):
+            SomeGroup()
