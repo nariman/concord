@@ -22,14 +22,31 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import abc
+import enum
+import typing
 
 from . import context
+
+
+class MiddlewareResult(enum.Enum):
+    """Enum values for middleware results.
+
+    One of these values can be returned in a middleware instead of actual data.
+    Anything returned by a middleware and isn't a enum value is considered as a
+    success of the process.
+    """
+
+    OK = enum.auto()
+    IGNORE = enum.auto()
 
 
 class Middleware(abc.ABC):
     """Event processing middleware.
 
     Middleware are useful for filtering events or extending functionality.
+
+    Middleware should return something (even `None`) to indicate success,
+    otherwise :class:`MiddlewareResult` values can be used.
     """
 
     @abc.abstractmethod
@@ -38,10 +55,10 @@ class Middleware(abc.ABC):
 
         Parameters
         ----------
-        ctx : context.Context
+        ctx : :class:`.context.Context`
             Discord message processing context.
 
-            .. note:
+            .. note::
                 Provided context can be replaced and passed to the next
                 middleware, but do it only if needed.
 
@@ -49,6 +66,13 @@ class Middleware(abc.ABC):
             The next function to call. Not necessarily a middleware. Pass
             context and all positional and keyword arguments, even if unused.
             Should be awaited.
+
+        Returns
+        -------
+        :class:`MiddlewareResult`
+            A enum value when no actual data can be provided.
+        :any:`typing.Any`
+            Middleware data.
         """
         pass
 
@@ -56,10 +80,15 @@ class Middleware(abc.ABC):
 class MiddlewareFunction(Middleware):
     """Middleware class for wrapping functions into valid middleware.
 
-    Attributes
+    Parameters
     ----------
     fn : callable
         A function to wrap as a middleware. Should be a coroutine.
+
+    Attributes
+    ----------
+    fn : callable
+        A function wrapped as a middleware. A coroutine.
     """
 
     def __init__(self, fn):
@@ -78,24 +107,35 @@ class MiddlewareCollection:
 
     Attributes
     ----------
-    collection : list[Middleware]
+    collection : List[:class:`Middleware`]
         List of middleware.
     """
 
     def __init__(self):
         self.collection = []
 
-    def add_middleware(self, middleware):
-        """Add middleware to the list."""
+    def add_middleware(self, middleware: Middleware):
+        """Add middleware to the list.
+
+        Parameters
+        ----------
+        middleware : :class:`Middleware`
+            A middleware to add to the list.
+        """
         self.collection.append(middleware)
 
 
 class MiddlewareChain(Middleware, MiddlewareCollection):
     """Class for chaining middleware. It's a middleware itself.
 
+    Parameters
+    ----------
+    middleware: :class:`Middleware`
+        The initial middleware in the chain.
+
     Attributes
     ----------
-    collection : list[Middleware]
+    collection : List[:class:`Middleware`]
         List of middleware to run in a certain order. The first items is a
         last-to-call middleware (in other words, list is reversed).
     """
@@ -112,7 +152,6 @@ class MiddlewareChain(Middleware, MiddlewareCollection):
                     ctx, next, *args, **kwargs
                 )
             )(current, next)
-
         return await next(ctx, *args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
@@ -125,16 +164,16 @@ class MiddlewareChain(Middleware, MiddlewareCollection):
 class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
     """Class for grouping middleware. It's a middleware itself.
 
-    Method `run` is abstract. Each subclass should implement own behavior of how
-    to run group of middleware. For example, run only one middleware, if
+    Method :meth:`run` is abstract. Each subclass should implement own behavior
+    of how to run group of middleware. For example, run only one middleware, if
     success, or run all middleware, or run middleware until desired results is
     obtained, etc. Useful, when it's known, what middleware can return.
 
-    Method `__call__` is abstract as well.
+    Method :meth:`__call__` is abstract as well.
 
     Attributes
     ----------
-    collection : list[Middleware]
+    collection : List[:class:`Middleware`]
         List of middleware to run. Take a note that middleware will be run in
         the order of they're in the list.
     """
@@ -163,7 +202,7 @@ def middleware(outer_middleware: Middleware):
 
     Parameters
     ----------
-    outer_middleware : Middleware
+    outer_middleware : :class:`Middleware`
         A middleware to append to the chain.
     """
     if not isinstance(outer_middleware, Middleware):
