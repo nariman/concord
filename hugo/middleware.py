@@ -200,25 +200,25 @@ def as_middleware(fn):
 def middleware(outer_middleware: Middleware):
     """Append a middleware to the chain.
 
+    If decorated function is not a middleware, it will be wrapped into
+    middleware by decorator.
+
     Parameters
     ----------
     outer_middleware : :class:`Middleware`
         A middleware to append to the chain.
     """
     if not isinstance(outer_middleware, Middleware):
-        raise ValueError("Outer middleware should be a `Middleware` instance.")
+        outer_middleware = as_middleware(outer_middleware)
     # fmt: off
 
     def decorator(inner_middleware: Middleware):
-        if not isinstance(inner_middleware, Middleware):
-            raise ValueError(
-                "Inner middleware should be a `Middleware` instance."
-            )
-
         if isinstance(inner_middleware, MiddlewareChain):
             middleware_chain = inner_middleware
-        else:
+        elif isinstance(inner_middleware, Middleware):
             middleware_chain = MiddlewareChain(inner_middleware)
+        else:
+            middleware_chain = MiddlewareChain(as_middleware(inner_middleware))
 
         middleware_chain.add_middleware(outer_middleware)
         return middleware_chain

@@ -151,7 +151,10 @@ class TestMiddleware:
 
     @pytest.mark.asyncio
     async def test_middleware_chain(self, sample):
-        """Test middleware chaining."""
+        """Test middleware chaining.
+
+        TODO: Should we check the order?
+        """
 
         @middleware.as_middleware
         async def first_middleware(ctx, next, *args, **kwargs):
@@ -181,14 +184,15 @@ class TestMiddleware:
 
     @pytest.mark.asyncio
     async def test_middleware_chain_decorator(self, sample):
-        """Test middleware chaining via decorator."""
+        """Test middleware chaining via decorator.
 
-        @middleware.as_middleware
+        TODO: Tests for all cases of parameters.
+        """
+
         async def second_middleware(ctx, next, *args, **kwargs):
             return await next(ctx, *args, **kwargs) + 2
 
         @middleware.middleware(second_middleware)
-        @middleware.as_middleware
         async def first_middleware(ctx, next, *args, **kwargs):
             return await next(ctx, *args, **kwargs) + 1
 
@@ -207,21 +211,6 @@ class TestMiddleware:
             sample_ctx, next, *sample_args, **sample_kwargs
         ) == 42 + 1 + 2
         # fmt: on
-
-    @pytest.mark.asyncio
-    async def test_middleware_chain_decorator_constraints(self, sample):
-        """Test that middleware chaining decorator applies only `Middleware`
-        instances."""
-
-        async def not_wrapped_middleware():
-            pass
-
-        wrapped_middleware = middleware.as_middleware(not_wrapped_middleware)
-
-        with pytest.raises(ValueError):
-            middleware.middleware(not_wrapped_middleware)(wrapped_middleware)
-        with pytest.raises(ValueError):
-            middleware.middleware(wrapped_middleware)(not_wrapped_middleware)
 
     @pytest.mark.asyncio
     async def test_middleware_chain_call(self, sample):
