@@ -1,4 +1,4 @@
 sphinx==1.7.6
 sphinx_rtd_theme==0.4.1
 sphinxcontrib-asyncio==0.2.0
-sphinxcontrib-napoleon
+sphinxcontrib-napoleon==0.6.1
