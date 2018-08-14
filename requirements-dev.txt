@@ -1,4 +1,4 @@
 sphinx
 sphinx_rtd_theme
-sphinxcontrib-asyncio
+sphinxcontrib-asyncio==0.2.0
 sphinxcontrib-napoleon
