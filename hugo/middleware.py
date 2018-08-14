@@ -32,7 +32,7 @@ class MiddlewareResult(enum.Enum):
     """Enum values for middleware results.
 
     One of these values can be returned in a middleware instead of actual data.
-    Anything returned by a middleware and isn't a enum value is considered as a
+    Anything returned by a middleware and is not a enum value is considered as a
     success of the process.
     """
 
@@ -76,6 +76,13 @@ class Middleware(abc.ABC):
         """
         pass
 
+    @staticmethod
+    def is_successful(value):
+        """Return `True`, if given value is a successful middleware result."""
+        if value == MiddlewareResult.IGNORE:
+            return False
+        return True
+
 
 class MiddlewareFunction(Middleware):
     """Middleware class for wrapping functions into valid middleware.
@@ -117,16 +124,27 @@ class MiddlewareCollection:
     def add_middleware(self, middleware: Middleware):
         """Add middleware to the list.
 
+        Can be used as a decorator.
+
         Parameters
         ----------
         middleware : :class:`Middleware`
             A middleware to add to the list.
+
+        Raises
+        ------
+        ValueError
+            If given parameter is not a middleware.
         """
+        if not isinstance(middleware, Middleware):
+            raise ValueError("Not a middleware")
         self.collection.append(middleware)
+
+        return middleware
 
 
 class MiddlewareChain(Middleware, MiddlewareCollection):
-    """Class for chaining middleware. It's a middleware itself.
+    """Class for chaining middleware. It is a middleware itself.
 
     Parameters
     ----------
@@ -162,12 +180,12 @@ class MiddlewareChain(Middleware, MiddlewareCollection):
 
 
 class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
-    """Class for grouping middleware. It's a middleware itself.
+    """Class for grouping middleware. It is a middleware itself.
 
     Method :meth:`run` is abstract. Each subclass should implement own behavior
     of how to run group of middleware. For example, run only one middleware, if
     success, or run all middleware, or run middleware until desired results is
-    obtained, etc. Useful, when it's known, what middleware can return.
+    obtained, etc. Useful, when it is known, what middleware can return.
 
     Method :meth:`__call__` is abstract as well.
 
@@ -175,7 +193,7 @@ class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
     ----------
     collection : List[:class:`Middleware`]
         List of middleware to run. Take a note that middleware will be run in
-        the order of they're in the list.
+        the order of they are in the list.
     """
 
     def __init__(self):
@@ -187,13 +205,28 @@ class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
 
     @abc.abstractmethod
     async def __call__(self, *args, **kwargs):
-        pass
+        raise TypeError("Method is not implemented")
 
 
 def as_middleware(fn):
-    """Wrap function into a middleware."""
+    """Wrap function into a middleware.
+
+    If you are planning to chain decorated function with another middleware,
+    just use :func:`middleware` decorator. It will wrap the function into
+    middleware for you.
+
+    Parameters
+    ----------
+    fn : callable
+        A function to wrap into a middleware.
+
+    Raises
+    ------
+    ValueError
+        If a function to wrap is already a middleware.
+    """
     if isinstance(fn, Middleware):
-        raise ValueError("Already a middleware.")
+        raise ValueError("Already a middleware")
     return MiddlewareFunction(fn)
 
 
@@ -225,3 +258,37 @@ def middleware(outer_middleware: Middleware):
     # fmt: on
 
     return decorator
+
+
+class OneOfAll(MiddlewareGroup):
+    """Middleware group with "first success" condition.
+
+    It will process middleware list until one of them return successful result.
+    See :class:`Middleware` for information about successful results.
+    """
+
+    async def run(self, ctx: context.Context, next, *args, **kwargs):
+        for mw in self.collection:
+            result = await mw.run(ctx, next, *args, **kwargs)
+
+            if self.is_successful(result):
+                return result
+        return MiddlewareResult.IGNORE
+
+    async def __call__(self, *args, **kwargs):
+        # Raise TypeError, if no one middleware is callable.
+        # Otherwise, just return MiddlewareResult.IGNORE value.
+        ignored = False
+
+        for mw in self.collection:
+            try:
+                result = await mw(*args, **kwargs)
+
+                if self.is_successful:
+                    return result
+                ignored = True
+            except TypeError:
+                continue
+        if ignored:
+            return MiddlewareResult.IGNORE
+        raise TypeError("No one middleware is callable")
