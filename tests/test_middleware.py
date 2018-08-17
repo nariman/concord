@@ -173,7 +173,8 @@ class TestMiddleware:
 
             return 42
 
-        chain = middleware.MiddlewareChain(first_middleware)
+        chain = middleware.MiddlewareChain()
+        chain.add_middleware(first_middleware)
         chain.add_middleware(second_middleware)
 
         # fmt: off

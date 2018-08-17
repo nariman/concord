@@ -56,7 +56,7 @@ class Middleware(abc.ABC):
         Parameters
         ----------
         ctx : :class:`.context.Context`
-            Discord message processing context.
+            Event processing context.
 
             .. note::
                 Provided context can be replaced and passed to the next
@@ -64,7 +64,7 @@ class Middleware(abc.ABC):
 
         next : callable
             The next function to call. Not necessarily a middleware. Pass
-            context and all positional and keyword arguments, even if unused.
+            context and all positional and keyword parameters, even if unused.
             Should be awaited.
 
         Returns
@@ -77,7 +77,7 @@ class Middleware(abc.ABC):
         pass
 
     @staticmethod
-    def is_successful(value):
+    def is_successful_result(value):
         """Return `True`, if given value is a successful middleware result."""
         if value == MiddlewareResult.IGNORE:
             return False
@@ -146,10 +146,10 @@ class MiddlewareCollection:
 class MiddlewareChain(Middleware, MiddlewareCollection):
     """Class for chaining middleware. It is a middleware itself.
 
-    Parameters
-    ----------
-    middleware: :class:`Middleware`
-        The initial middleware in the chain.
+    Can be interpreted as a middleware group, where all middleware should return
+    successful result. But it is not a :class:`MiddlewareGroup` realization
+    actually, due to each middleware can change context and passed parameters
+    for the next middleware in the chain.
 
     Attributes
     ----------
@@ -158,9 +158,8 @@ class MiddlewareChain(Middleware, MiddlewareCollection):
         last-to-call middleware (in other words, list is reversed).
     """
 
-    def __init__(self, middleware: Middleware):
+    def __init__(self):
         super().__init__()
-        self.add_middleware(middleware)
 
     async def run(self, ctx: context.Context, next, *args, **kwargs):
         # Oh dear! Please, rewrite it...
@@ -248,10 +247,12 @@ def middleware(outer_middleware: Middleware):
     def decorator(inner_middleware: Middleware):
         if isinstance(inner_middleware, MiddlewareChain):
             middleware_chain = inner_middleware
-        elif isinstance(inner_middleware, Middleware):
-            middleware_chain = MiddlewareChain(inner_middleware)
         else:
-            middleware_chain = MiddlewareChain(as_middleware(inner_middleware))
+            middleware_chain = MiddlewareChain()
+            if isinstance(inner_middleware, Middleware):
+                middleware_chain.add_middleware(inner_middleware)
+            else:
+                middleware_chain.add_middleware(as_middleware(inner_middleware))
 
         middleware_chain.add_middleware(outer_middleware)
         return middleware_chain
@@ -271,12 +272,12 @@ class OneOfAll(MiddlewareGroup):
         for mw in self.collection:
             result = await mw.run(ctx, next, *args, **kwargs)
 
-            if self.is_successful(result):
+            if self.is_successful_result(result):
                 return result
         return MiddlewareResult.IGNORE
 
     async def __call__(self, *args, **kwargs):
-        # Raise TypeError, if no one middleware is callable.
+        # Raise TypeError, if no one middleware is a callable.
         # Otherwise, just return MiddlewareResult.IGNORE value.
         ignored = False
 
@@ -284,11 +285,11 @@ class OneOfAll(MiddlewareGroup):
             try:
                 result = await mw(*args, **kwargs)
 
-                if self.is_successful:
+                if self.is_successful_result(result):
                     return result
                 ignored = True
             except TypeError:
                 continue
         if ignored:
             return MiddlewareResult.IGNORE
-        raise TypeError("No one middleware is callable")
+        raise TypeError("No one middleware is a callable")
