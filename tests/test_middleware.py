@@ -28,9 +28,9 @@ from hugo import middleware
 
 
 @pytest.fixture(scope="function")
-async def sample():
+async def sample(bot_instance):
     """Returns sample context, positional and keyword arguments."""
-    ctx = context.Context(None, None)
+    ctx = context.Context(bot_instance, None)
     args = [1, "2"]
     kwargs = {"k": 1, "v": "2"}
 
@@ -53,13 +53,13 @@ class TestMiddleware:
     async def test_middleware_run_method(self, sample):
         """Test that middleware `run` method works correctly and calls `next`
         function with provided arguments."""
+        sample_ctx, sample_args, sample_kwargs = sample
 
         class SomeMiddleware(middleware.Middleware):
             async def run(self, ctx, next, *args, **kwargs):
                 return await next(ctx, *args, **kwargs)
 
         mw = SomeMiddleware()
-        sample_ctx, sample_args, sample_kwargs = sample
 
         async def next(ctx, *args, **kwargs):
             assert ctx == sample_ctx
@@ -74,15 +74,34 @@ class TestMiddleware:
         ) == 42
         # fmt: on
 
+    @pytest.mark.parametrize(
+        "value",
+        [
+            middleware.MiddlewareResult.OK,
+            middleware.MiddlewareResult.IGNORE,
+            None,
+            True,
+            False,
+            42,
+            "42",
+        ],
+    )
+    def test_middleware_successful_result_checker(self, value):
+        """Tests `is_successful_result` method."""
+        if value == middleware.MiddlewareResult.IGNORE:
+            assert middleware.Middleware.is_successful_result(value) is False
+        else:
+            assert middleware.Middleware.is_successful_result(value) is True
+
     @pytest.mark.asyncio
     async def test_middleware_function(self, sample):
         """Test that function can be wrapped into middleware."""
+        sample_ctx, sample_args, sample_kwargs = sample
 
         async def some_middleware(ctx, next, *args, **kwargs):
             return await next(ctx, *args, **kwargs)
 
         mw = middleware.MiddlewareFunction(some_middleware)
-        sample_ctx, sample_args, sample_kwargs = sample
 
         async def next(ctx, *args, **kwargs):
             assert ctx == sample_ctx
@@ -103,19 +122,10 @@ class TestMiddleware:
         sample_ctx, sample_args, sample_kwargs = sample
 
         @middleware.as_middleware
-        async def mw(ctx, _next, *args, **kwargs):
-            assert ctx == sample_ctx
-            assert sample_args == list(args)
-            assert sample_kwargs == kwargs
-
-            return 42
+        async def mw(_ctx, _next, *args, **kwargs):
+            pass
 
         assert isinstance(mw, middleware.MiddlewareFunction)
-        # fmt: off
-        assert await mw.run(
-            sample_ctx, None, *sample_args, **sample_kwargs
-        ) == 42
-        # fmt: on
 
     @pytest.mark.asyncio
     async def test_middleware_function_call(self, sample):
@@ -136,11 +146,11 @@ class TestMiddleware:
         """Test middleware collection class."""
 
         @middleware.as_middleware
-        async def first_middleware(ctx, _next, *args, **kwargs):
+        async def first_middleware(_ctx, _next, *args, **kwargs):
             pass
 
         @middleware.as_middleware
-        async def second_middleware(ctx, _next, *args, **kwargs):
+        async def second_middleware(_ctx, _next, *args, **kwargs):
             pass
 
         mc = middleware.MiddlewareCollection()
@@ -149,12 +159,16 @@ class TestMiddleware:
 
         assert set(mc.collection) == set([first_middleware, second_middleware])
 
+        with pytest.raises(ValueError):
+            mc.add_middleware(42)
+
     @pytest.mark.asyncio
     async def test_middleware_chain(self, sample):
         """Test middleware chaining.
 
-        TODO: Should we check the order?
+        TODO: Check the order of running middleware.
         """
+        sample_ctx, sample_args, sample_kwargs = sample
 
         @middleware.as_middleware
         async def first_middleware(ctx, next, *args, **kwargs):
@@ -163,8 +177,6 @@ class TestMiddleware:
         @middleware.as_middleware
         async def second_middleware(ctx, next, *args, **kwargs):
             return await next(ctx, *args, **kwargs) + 2
-
-        sample_ctx, sample_args, sample_kwargs = sample
 
         async def next(ctx, *args, **kwargs):
             assert ctx == sample_ctx
@@ -177,11 +189,10 @@ class TestMiddleware:
         chain.add_middleware(first_middleware)
         chain.add_middleware(second_middleware)
 
-        # fmt: off
-        assert await chain.run(
-            sample_ctx, next, *sample_args, **sample_kwargs
-        ) == 42 + 1 + 2
-        # fmt: on
+        assert (
+            await chain.run(sample_ctx, next, *sample_args, **sample_kwargs)
+            == 42 + 1 + 2
+        )
 
     @pytest.mark.asyncio
     async def test_middleware_chain_decorator(self, sample):
@@ -190,28 +201,14 @@ class TestMiddleware:
         TODO: Tests for all cases of parameters.
         """
 
-        async def second_middleware(ctx, next, *args, **kwargs):
-            return await next(ctx, *args, **kwargs) + 2
+        async def second_middleware(_ctx, _next, *args, **kwargs):
+            pass
 
         @middleware.middleware(second_middleware)
-        async def first_middleware(ctx, next, *args, **kwargs):
-            return await next(ctx, *args, **kwargs) + 1
-
-        sample_ctx, sample_args, sample_kwargs = sample
-
-        async def next(ctx, *args, **kwargs):
-            assert ctx == sample_ctx
-            assert sample_args == list(args)
-            assert sample_kwargs == kwargs
-
-            return 42
+        async def first_middleware(_ctx, _next, *args, **kwargs):
+            pass
 
         assert isinstance(first_middleware, middleware.MiddlewareChain)
-        # fmt: off
-        assert await first_middleware.run(
-            sample_ctx, next, *sample_args, **sample_kwargs
-        ) == 42 + 1 + 2
-        # fmt: on
 
     @pytest.mark.asyncio
     async def test_middleware_chain_call(self, sample):
@@ -219,7 +216,6 @@ class TestMiddleware:
         called."""
         sample_ctx, sample_args, sample_kwargs = sample
 
-        @middleware.as_middleware
         async def second_middleware(ctx, _next, *args, **kwargs):
             assert ctx == sample_ctx
             assert sample_args == list(args)
@@ -228,7 +224,6 @@ class TestMiddleware:
             return 2
 
         @middleware.middleware(second_middleware)
-        @middleware.as_middleware
         async def first_middleware(ctx, _next, *args, **kwargs):
             assert ctx == sample_ctx
             assert sample_args == list(args)
@@ -243,7 +238,8 @@ class TestMiddleware:
         ) == 1
         # fmt: on
 
-    def test_middleware_group_class_is_abstract(self):
+    @pytest.mark.asyncio
+    async def test_middleware_group_class_is_abstract(self):
         """Test that middleware group subclass should implement methods.
 
         Class itself has no code to test, functionality can be tested on
@@ -253,5 +249,66 @@ class TestMiddleware:
         class SomeGroup(middleware.MiddlewareGroup):
             pass
 
+        class SomeImplementedGroup(middleware.MiddlewareGroup):
+            async def run(self, _ctx, _next, *args, **kwargs):
+                pass
+
         with pytest.raises(TypeError):
             SomeGroup()
+        with pytest.raises(TypeError):
+            instance = SomeImplementedGroup()
+            await instance()
+
+    @pytest.mark.asyncio
+    async def test_one_of_all(self, sample):
+        """Test OneOfAll class."""
+        sample_ctx, sample_args, sample_kwargs = sample
+
+        @middleware.as_middleware
+        async def first_middleware(_ctx, _next, *args, **kwargs):
+            return middleware.MiddlewareResult.IGNORE
+
+        @middleware.as_middleware
+        async def second_middleware(_ctx, _next, *args, **kwargs):
+            return 2
+
+        @middleware.as_middleware
+        async def third_middleware(_ctx, _next, *args, **kwargs):
+            return 3
+
+        ooa = middleware.OneOfAll()
+        ooa.add_middleware(first_middleware)
+        ooa.add_middleware(second_middleware)
+        ooa.add_middleware(third_middleware)
+
+        # fmt: off
+        assert await ooa.run(
+            sample_ctx, None, *sample_args, **sample_kwargs
+        ) == 2
+        # fmt: on
+        assert await ooa(sample_ctx, None, *sample_args, **sample_kwargs) == 2
+
+        class NonCallableMiddleware(middleware.Middleware):
+            async def run(self, _ctx, _next, *args, **kwargs):
+                return middleware.MiddlewareResult.IGNORE
+
+        ooa = middleware.OneOfAll()
+        ooa.add_middleware(NonCallableMiddleware())
+        ooa.add_middleware(NonCallableMiddleware())
+
+        assert (
+            await ooa.run(sample_ctx, None, *sample_args, **sample_kwargs)
+            == middleware.MiddlewareResult.IGNORE
+        )
+
+        # All middleware is non-callable, should emulate non-callable
+        with pytest.raises(TypeError):
+            await ooa(sample_ctx, None, *sample_args, **sample_kwargs)
+        #
+        # A callable middleware is exists, should return unsuccessful result
+        ooa.add_middleware(first_middleware)
+
+        assert (
+            await ooa(sample_ctx, None, *sample_args, **sample_kwargs)
+            == middleware.MiddlewareResult.IGNORE
+        )

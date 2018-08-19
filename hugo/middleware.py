@@ -74,7 +74,7 @@ class Middleware(abc.ABC):
         :any:`typing.Any`
             Middleware data.
         """
-        pass
+        pass  # pragma: no cover
 
     @staticmethod
     def is_successful_result(value):
@@ -105,7 +105,7 @@ class MiddlewareFunction(Middleware):
         return await self.fn(ctx, next, *args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
-        """Invokes function with given parameters."""
+        """Invoke function with given parameters."""
         return await self.fn(*args, **kwargs)
 
 
@@ -186,7 +186,9 @@ class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
     success, or run all middleware, or run middleware until desired results is
     obtained, etc. Useful, when it is known, what middleware can return.
 
-    Method :meth:`__call__` is abstract as well.
+    Method :meth:`__call__` is abstract as well, but is not required to be
+    implemented, if unnecessary. It will raises TypeError by default, emulating
+    non-callable object.
 
     Attributes
     ----------
@@ -200,9 +202,8 @@ class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
 
     @abc.abstractmethod
     async def run(self, ctx: context.Context, next, *args, **kwargs):
-        pass
+        pass  # pragma: no cover
 
-    @abc.abstractmethod
     async def __call__(self, *args, **kwargs):
         raise TypeError("Method is not implemented")
 
@@ -212,20 +213,19 @@ def as_middleware(fn):
 
     If you are planning to chain decorated function with another middleware,
     just use :func:`middleware` decorator. It will wrap the function into
-    middleware for you.
+    middleware for you, if needed.
+
+    .. warning::
+
+        Do not use it, if not sure.
 
     Parameters
     ----------
     fn : callable
         A function to wrap into a middleware.
-
-    Raises
-    ------
-    ValueError
-        If a function to wrap is already a middleware.
     """
-    if isinstance(fn, Middleware):
-        raise ValueError("Already a middleware")
+    # We don't care, when somebody is wrapping a middleware into another one
+    # (middleware is not a callable by default).
     return MiddlewareFunction(fn)
 
 
