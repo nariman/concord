@@ -50,7 +50,7 @@ class TestMiddleware:
             SomeMiddleware()
 
     @pytest.mark.asyncio
-    async def test_middleware_run_method(self, sample):
+    async def test_middleware(self, sample):
         """Test that middleware `run` method works correctly and calls `next`
         function with provided arguments."""
         sample_ctx, sample_args, sample_kwargs = sample
@@ -142,8 +142,34 @@ class TestMiddleware:
 
         assert await mw(sample_ctx, None, *sample_args, **sample_kwargs) == 42
 
+    @pytest.mark.asyncio
+    async def test_middleware_collection_class_is_abstract(self):
+        """Test that middleware collection subclass should implement methods.
+
+        Class itself has no code to test, functionality can be tested on
+        subclasses.
+        """
+
+        class SomeCollection(middleware.MiddlewareCollection):
+            pass
+
+        class SomeImplementedCollection(middleware.MiddlewareCollection):
+            async def run(self, _ctx, _next, *args, **kwargs):
+                pass
+
+        with pytest.raises(TypeError):
+            SomeCollection()
+        #
+        with pytest.raises(TypeError):
+            instance = SomeImplementedCollection()
+            await instance()
+
     def test_middleware_collection(self):
         """Test middleware collection class."""
+
+        class SomeCollection(middleware.MiddlewareCollection):
+            async def run(self, _ctx, _next, *args, **kwargs):
+                pass
 
         @middleware.as_middleware
         async def first_middleware(_ctx, _next, *args, **kwargs):
@@ -153,12 +179,13 @@ class TestMiddleware:
         async def second_middleware(_ctx, _next, *args, **kwargs):
             pass
 
-        mc = middleware.MiddlewareCollection()
+        mc = SomeCollection()
         mc.add_middleware(first_middleware)
         mc.add_middleware(second_middleware)
 
         assert set(mc.collection) == set([first_middleware, second_middleware])
 
+        # Accept only Middleware instances
         with pytest.raises(ValueError):
             mc.add_middleware(42)
 
@@ -237,27 +264,6 @@ class TestMiddleware:
             sample_ctx, None, *sample_args, **sample_kwargs
         ) == 1
         # fmt: on
-
-    @pytest.mark.asyncio
-    async def test_middleware_group_class_is_abstract(self):
-        """Test that middleware group subclass should implement methods.
-
-        Class itself has no code to test, functionality can be tested on
-        subclasses.
-        """
-
-        class SomeGroup(middleware.MiddlewareGroup):
-            pass
-
-        class SomeImplementedGroup(middleware.MiddlewareGroup):
-            async def run(self, _ctx, _next, *args, **kwargs):
-                pass
-
-        with pytest.raises(TypeError):
-            SomeGroup()
-        with pytest.raises(TypeError):
-            instance = SomeImplementedGroup()
-            await instance()
 
     @pytest.mark.asyncio
     async def test_one_of_all(self, sample):

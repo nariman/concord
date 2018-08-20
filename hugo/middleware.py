@@ -102,6 +102,7 @@ class MiddlewareFunction(Middleware):
         self.fn = fn
 
     async def run(self, ctx: context.Context, next, *args, **kwargs):
+        """Invoke function as a middleware with given parameters."""
         return await self.fn(ctx, next, *args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
@@ -109,13 +110,23 @@ class MiddlewareFunction(Middleware):
         return await self.fn(*args, **kwargs)
 
 
-class MiddlewareCollection:
-    """Class for process list of middleware in some order and rules.
+class MiddlewareCollection(Middleware, abc.ABC):
+    """Class for grouping middleware. It is a middleware itself.
+
+    Method :meth:`run` is abstract. Each subclass should implement own behavior
+    of how to run group of middleware. For example, run only one middleware, if
+    success, or run all middleware, or run middleware until desired results is
+    obtained, etc. Useful, when it is known, what middleware can return.
+
+    Method :meth:`__call__` is abstract as well, but is not required to be
+    implemented, if unnecessary. It will raises TypeError by default, emulating
+    non-callable object.
 
     Attributes
     ----------
     collection : List[:class:`Middleware`]
-        List of middleware.
+        List of middleware to run. Take a note that order of middleware in the
+        list can be used in a subclass implementation.
     """
 
     def __init__(self):
@@ -131,6 +142,11 @@ class MiddlewareCollection:
         middleware : :class:`Middleware`
             A middleware to add to the list.
 
+        Returns
+        -------
+        :class:`Middleware`
+            A given middleware.
+
         Raises
         ------
         ValueError
@@ -138,12 +154,19 @@ class MiddlewareCollection:
         """
         if not isinstance(middleware, Middleware):
             raise ValueError("Not a middleware")
+        #
         self.collection.append(middleware)
-
         return middleware
 
+    @abc.abstractmethod
+    async def run(self, ctx: context.Context, next, *args, **kwargs):
+        pass  # pragma: no cover
 
-class MiddlewareChain(Middleware, MiddlewareCollection):
+    async def __call__(self, *args, **kwargs):
+        raise TypeError("Method is not implemented")
+
+
+class MiddlewareChain(MiddlewareCollection):
     """Class for chaining middleware. It is a middleware itself.
 
     Can be interpreted as a middleware group, where all middleware should return
@@ -172,40 +195,12 @@ class MiddlewareChain(Middleware, MiddlewareCollection):
         return await next(ctx, *args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
-        """Invokes last middleware with given parameters.
+        """Invoke last middleware with given parameters.
 
-        It makes sense only if last middleware is a wrapped function."""
+        It makes sense only if last middleware is a callable (wrapped function
+        or another middleware collection).
+        """
         return await self.collection[0](*args, **kwargs)
-
-
-class MiddlewareGroup(Middleware, MiddlewareCollection, abc.ABC):
-    """Class for grouping middleware. It is a middleware itself.
-
-    Method :meth:`run` is abstract. Each subclass should implement own behavior
-    of how to run group of middleware. For example, run only one middleware, if
-    success, or run all middleware, or run middleware until desired results is
-    obtained, etc. Useful, when it is known, what middleware can return.
-
-    Method :meth:`__call__` is abstract as well, but is not required to be
-    implemented, if unnecessary. It will raises TypeError by default, emulating
-    non-callable object.
-
-    Attributes
-    ----------
-    collection : List[:class:`Middleware`]
-        List of middleware to run. Take a note that middleware will be run in
-        the order of they are in the list.
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    @abc.abstractmethod
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
-        pass  # pragma: no cover
-
-    async def __call__(self, *args, **kwargs):
-        raise TypeError("Method is not implemented")
 
 
 def as_middleware(fn):
@@ -261,7 +256,7 @@ def middleware(outer_middleware: Middleware):
     return decorator
 
 
-class OneOfAll(MiddlewareGroup):
+class OneOfAll(MiddlewareCollection):
     """Middleware group with "first success" condition.
 
     It will process middleware list until one of them return successful result.
