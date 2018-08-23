@@ -125,7 +125,7 @@ class ChannelType(Middleware):
         text: bool = False,
         # voice: bool = False,
         dm: bool = False,
-        group: bool = False
+        group: bool = False,
     ):
         self.text = guild or text
         # self.voice = guild or voice
@@ -155,7 +155,7 @@ def channel_type(
     text: bool = False,
     # voice: bool = False,
     dm: bool = False,
-    group: bool = False
+    group: bool = False,
 ):
     """Append a :class:`ChannelType` middleware to the chain with given
     constraints.

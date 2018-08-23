@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "hugo"
+version = "0.3.1"
+description = "Discord bot library"
+authors = ["Nariman Safiulin <woofilee@gmail.com>"]
+license = "MIT"
+
+readme = "README.md"
+repository = "https://github.com/narimansafiulin/Hugo"
+
+keywords = ["discord", "bot", "hugo"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Software Development :: Libraries",
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+"discord.py" = "^0.16.12"
+
+[tool.poetry.dev-dependencies]
+coverage = "^4.5"
+pytest = "^3.7"
+pytest-asyncio = "^0.9.0"
+pytest-cov = "^2.5"
+sphinx = "^1.7"
+sphinx_rtd_theme = "^0.4.1"
+sphinxcontrib-asyncio = "^0.2.0"
+sphinxcontrib-napoleon = "^0.6.1"
+
+[tool.black]
+line-length = 80
+py36 = true

@@ -1,8 +1,0 @@
-search: False
-
-requirements:
-  - requirements.txt
-  - requirements-dev.txt
-  - requirements-test.txt
-
-branch_prefix: pyup/

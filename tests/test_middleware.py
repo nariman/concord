@@ -68,11 +68,9 @@ class TestMiddleware:
 
             return 42
 
-        # fmt: off
-        assert await mw.run(
-            sample_ctx, next, *sample_args, **sample_kwargs
-        ) == 42
-        # fmt: on
+        assert (
+            await mw.run(sample_ctx, next, *sample_args, **sample_kwargs) == 42
+        )
 
     @pytest.mark.parametrize(
         "value",
@@ -110,11 +108,9 @@ class TestMiddleware:
 
             return 42
 
-        # fmt: off
-        assert await mw.run(
-            sample_ctx, next, *sample_args, **sample_kwargs
-        ) == 42
-        # fmt: on
+        assert (
+            await mw.run(sample_ctx, next, *sample_args, **sample_kwargs) == 42
+        )
 
     @pytest.mark.asyncio
     async def test_middleware_function_decorator(self, sample):
@@ -259,11 +255,13 @@ class TestMiddleware:
             return 1
 
         assert isinstance(first_middleware, middleware.MiddlewareChain)
-        # fmt: off
-        assert await first_middleware(
-            sample_ctx, None, *sample_args, **sample_kwargs
-        ) == 1
-        # fmt: on
+
+        assert (
+            await first_middleware(
+                sample_ctx, None, *sample_args, **sample_kwargs
+            )
+            == 1
+        )
 
     @pytest.mark.asyncio
     async def test_one_of_all(self, sample):
@@ -287,11 +285,9 @@ class TestMiddleware:
         ooa.add_middleware(second_middleware)
         ooa.add_middleware(third_middleware)
 
-        # fmt: off
-        assert await ooa.run(
-            sample_ctx, None, *sample_args, **sample_kwargs
-        ) == 2
-        # fmt: on
+        assert (
+            await ooa.run(sample_ctx, None, *sample_args, **sample_kwargs) == 2
+        )
         assert await ooa(sample_ctx, None, *sample_args, **sample_kwargs) == 2
 
         class NonCallableMiddleware(middleware.Middleware):

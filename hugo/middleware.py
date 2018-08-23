@@ -237,21 +237,19 @@ def middleware(outer_middleware: Middleware):
     """
     if not isinstance(outer_middleware, Middleware):
         outer_middleware = as_middleware(outer_middleware)
-    # fmt: off
 
     def decorator(inner_middleware: Middleware):
         if isinstance(inner_middleware, MiddlewareChain):
             middleware_chain = inner_middleware
         else:
             middleware_chain = MiddlewareChain()
-            if isinstance(inner_middleware, Middleware):
-                middleware_chain.add_middleware(inner_middleware)
-            else:
-                middleware_chain.add_middleware(as_middleware(inner_middleware))
 
+            if not isinstance(inner_middleware, Middleware):
+                inner_middleware = as_middleware(inner_middleware)
+            middleware_chain.add_middleware(inner_middleware)
+        #
         middleware_chain.add_middleware(outer_middleware)
         return middleware_chain
-    # fmt: on
 
     return decorator
 
@@ -282,9 +280,12 @@ class OneOfAll(MiddlewareCollection):
 
                 if self.is_successful_result(result):
                     return result
+                #
                 ignored = True
             except TypeError:
                 continue
+        #
         if ignored:
             return MiddlewareResult.IGNORE
+        #
         raise TypeError("No one middleware is a callable")
