@@ -22,5 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 
-class BotException(Exception):
+class HugoException(Exception):
+    """Base exception class for the library."""
+
     pass

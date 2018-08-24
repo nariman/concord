@@ -29,15 +29,6 @@ from .context import Context
 from .middleware import Middleware, MiddlewareResult, middleware
 
 
-def _decorator_for_outer_mw(outer_middleware: Middleware):
-    """Return a decorator with given outer middleware."""
-
-    def decorator(inner_middleware: Middleware):
-        return middleware(outer_middleware)(inner_middleware)
-
-    return decorator
-
-
 class Pattern(Middleware):
     """Message context filter.
 
@@ -55,12 +46,12 @@ class Pattern(Middleware):
     def __init__(self, pattern: str):
         self.pattern = pattern
 
-    async def run(self, ctx: Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: Context, next, **kwargs):
         result = re.search(self.pattern, ctx.message.content)
 
         if result:
             kwargs.update(result.groupdict())
-            return await next(ctx, *args, **kwargs)
+            return await next(*args, ctx=ctx, **kwargs)
         return MiddlewareResult.IGNORE
 
 
@@ -72,7 +63,7 @@ def pattern(pattern: str):
     pattern : str
         The source regex string.
     """
-    return _decorator_for_outer_mw(Pattern(pattern))
+    return middleware(Pattern(pattern))
 
 
 class BotConstraint(Middleware):
@@ -90,9 +81,9 @@ class BotConstraint(Middleware):
     def __init__(self, *, authored_by_bot: bool):
         self.authored_by_bot = authored_by_bot
 
-    async def run(self, ctx: Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: Context, next, **kwargs):
         if not self.authored_by_bot ^ ctx.message.author.bot:
-            return await next(ctx, *args, **kwargs)
+            return await next(*args, ctx=ctx, **kwargs)
         return MiddlewareResult.IGNORE
 
 
@@ -100,14 +91,14 @@ def not_authored_by_bot():
     """Append a :class:`BotConstraint` middleware to the chain with a "not
     authored by bot" constraint.
     """
-    return _decorator_for_outer_mw(BotConstraint(authored_by_bot=False))
+    return middleware(BotConstraint(authored_by_bot=False))
 
 
 def authored_by_bot():
     """Append a :class:`BotConstraint` middleware to the chain with a "authored
     by bot" constraint.
     """
-    return _decorator_for_outer_mw(BotConstraint(authored_by_bot=True))
+    return middleware(BotConstraint(authored_by_bot=True))
 
 
 class ChannelType(Middleware):
@@ -132,7 +123,7 @@ class ChannelType(Middleware):
         self.dm = private or dm
         self.group = private or group
 
-    async def run(self, ctx: Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: Context, next, **kwargs):
         channel = ctx.message.channel
 
         # fmt: off
@@ -142,7 +133,7 @@ class ChannelType(Middleware):
             or self.dm and isinstance(channel, discord.DMChannel)
             or self.group and isinstance(channel, discord.GroupChannel)
         ):
-            return await next(ctx, *args, **kwargs)
+            return await next(*args, ctx=ctx, **kwargs)
         # fmt: on
 
         return MiddlewareResult.IGNORE
@@ -160,7 +151,7 @@ def channel_type(
     """Append a :class:`ChannelType` middleware to the chain with given
     constraints.
     """
-    return _decorator_for_outer_mw(
+    return middleware(
         ChannelType(
             guild=guild,
             private=private,

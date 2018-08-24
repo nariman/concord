@@ -22,7 +22,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import abc
+import asyncio
 import enum
+import types
 import typing
 
 from . import context
@@ -47,11 +49,31 @@ class Middleware(abc.ABC):
 
     Middleware should return something (even `None`) to indicate success,
     otherwise :class:`MiddlewareResult` values can be used.
+
+    Functions can also be converted into a middleware by using
+    :class:`MiddlewareFunction` or :func:`as_middleware` decorator.
+
+    Attributes
+    ----------
+    fn : Optional[:any:`typing.Callable`]
+        The source function, when the last middleware in the middleware chain is
+        a converted function or it is a converted function itself. Can be not
+        presented, if middleware chain created not with :func:`middleware`
+        decorator.
+
+        .. seealso::
+            :class:`MiddlewareChain`.
     """
 
+    def __init__(self):
+        self.fn = None
+
     @abc.abstractmethod
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
         """Middleware's main logic.
+
+        .. note::
+            Context is a keyword parameter.
 
         Parameters
         ----------
@@ -64,8 +86,13 @@ class Middleware(abc.ABC):
 
         next : callable
             The next function to call. Not necessarily a middleware. Pass
-            context and all positional and keyword parameters, even if unused.
+            context, all positional and keyword parameters, even if unused.
             Should be awaited.
+
+            .. warning::
+                Context is a keyword parameter. If you will pass it as a
+                positional parameter, this can cause errors on all next
+                middleware in a chain.
 
         Returns
         -------
@@ -83,31 +110,40 @@ class Middleware(abc.ABC):
             return False
         return True
 
+    async def __call__(self, *args, ctx: context.Context, next, **kwargs):
+        """Invoke middleware with given parameters."""
+        return await self.run(*args, ctx=ctx, next=next, **kwargs)
+
 
 class MiddlewareFunction(Middleware):
-    """Middleware class for wrapping functions into valid middleware.
+    """Middleware class for converting functions into valid middleware.
 
     Parameters
     ----------
     fn : callable
-        A function to wrap as a middleware. Should be a coroutine.
+        A function to convert into a middleware. Should be a coroutine.
+
+    Raises
+    ------
+    ValueError
+        If given function is not a coroutine.
 
     Attributes
     ----------
     fn : callable
-        A function wrapped as a middleware. A coroutine.
+        A function converted into a middleware. A coroutine.
     """
 
     def __init__(self, fn):
+        super().__init__()
+
+        if not asyncio.iscoroutinefunction(fn):
+            raise ValueError("Not a coroutine")
         self.fn = fn
 
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
         """Invoke function as a middleware with given parameters."""
-        return await self.fn(ctx, next, *args, **kwargs)
-
-    async def __call__(self, *args, **kwargs):
-        """Invoke function with given parameters."""
-        return await self.fn(*args, **kwargs)
+        return await self.fn(*args, ctx=ctx, next=next, **kwargs)
 
 
 class MiddlewareCollection(Middleware, abc.ABC):
@@ -118,10 +154,6 @@ class MiddlewareCollection(Middleware, abc.ABC):
     success, or run all middleware, or run middleware until desired results is
     obtained, etc. Useful, when it is known, what middleware can return.
 
-    Method :meth:`__call__` is abstract as well, but is not required to be
-    implemented, if unnecessary. It will raises TypeError by default, emulating
-    non-callable object.
-
     Attributes
     ----------
     collection : List[:class:`Middleware`]
@@ -130,6 +162,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
     """
 
     def __init__(self):
+        super().__init__()
         self.collection = []
 
     def add_middleware(self, middleware: Middleware):
@@ -159,20 +192,12 @@ class MiddlewareCollection(Middleware, abc.ABC):
         return middleware
 
     @abc.abstractmethod
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
         pass  # pragma: no cover
-
-    async def __call__(self, *args, **kwargs):
-        raise TypeError("Method is not implemented")
 
 
 class MiddlewareChain(MiddlewareCollection):
     """Class for chaining middleware. It is a middleware itself.
-
-    Can be interpreted as a middleware group, where all middleware should return
-    successful result. But it is not a :class:`MiddlewareGroup` realization
-    actually, due to each middleware can change context and passed parameters
-    for the next middleware in the chain.
 
     Attributes
     ----------
@@ -184,31 +209,23 @@ class MiddlewareChain(MiddlewareCollection):
     def __init__(self):
         super().__init__()
 
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
-                lambda current, next: lambda ctx, *args, **kwargs: current.run(
-                    ctx, next, *args, **kwargs
+                lambda current, next: lambda *args, ctx, **kwargs: current.run(
+                    *args, ctx=ctx, next=next, **kwargs
                 )
             )(current, next)
-        return await next(ctx, *args, **kwargs)
-
-    async def __call__(self, *args, **kwargs):
-        """Invoke last middleware with given parameters.
-
-        It makes sense only if last middleware is a callable (wrapped function
-        or another middleware collection).
-        """
-        return await self.collection[0](*args, **kwargs)
+        return await next(*args, ctx=ctx, **kwargs)
 
 
 def as_middleware(fn):
-    """Wrap function into a middleware.
+    """Convert function into a middleware.
 
-    If you are planning to chain decorated function with another middleware,
-    just use :func:`middleware` decorator. It will wrap the function into
-    middleware for you, if needed.
+    If you are planning to chain the decorated function with another middleware,
+    just use :func:`middleware` decorator. It will convert the function into
+    a middleware for you, if needed.
 
     .. warning::
 
@@ -217,17 +234,16 @@ def as_middleware(fn):
     Parameters
     ----------
     fn : callable
-        A function to wrap into a middleware.
+        A function to convert into a middleware.
     """
-    # We don't care, when somebody is wrapping a middleware into another one
-    # (middleware is not a callable by default).
+    # We don't care, when somebody is convering a middleware into another one...
     return MiddlewareFunction(fn)
 
 
 def middleware(outer_middleware: Middleware):
     """Append a middleware to the chain.
 
-    If decorated function is not a middleware, it will be wrapped into
+    If decorated function is not a middleware, it will be converted into a
     middleware by decorator.
 
     Parameters
@@ -246,7 +262,9 @@ def middleware(outer_middleware: Middleware):
 
             if not isinstance(inner_middleware, Middleware):
                 inner_middleware = as_middleware(inner_middleware)
+            #
             middleware_chain.add_middleware(inner_middleware)
+            middleware_chain.fn = inner_middleware.fn
         #
         middleware_chain.add_middleware(outer_middleware)
         return middleware_chain
@@ -261,31 +279,10 @@ class OneOfAll(MiddlewareCollection):
     See :class:`Middleware` for information about successful results.
     """
 
-    async def run(self, ctx: context.Context, next, *args, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
         for mw in self.collection:
-            result = await mw.run(ctx, next, *args, **kwargs)
+            result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
 
             if self.is_successful_result(result):
                 return result
         return MiddlewareResult.IGNORE
-
-    async def __call__(self, *args, **kwargs):
-        # Raise TypeError, if no one middleware is a callable.
-        # Otherwise, just return MiddlewareResult.IGNORE value.
-        ignored = False
-
-        for mw in self.collection:
-            try:
-                result = await mw(*args, **kwargs)
-
-                if self.is_successful_result(result):
-                    return result
-                #
-                ignored = True
-            except TypeError:
-                continue
-        #
-        if ignored:
-            return MiddlewareResult.IGNORE
-        #
-        raise TypeError("No one middleware is a callable")

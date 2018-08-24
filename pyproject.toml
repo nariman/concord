@@ -21,7 +21,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-"discord.py" = "^0.16.12"
+"discord.py" = "^1.0.0a"
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5"
