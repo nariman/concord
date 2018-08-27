@@ -141,9 +141,6 @@ class TestMiddleware:
         assert isinstance(converted_mw, middleware.MiddlewareFunction)
         assert converted_mw.fn == mw
 
-    @pytest.mark.skip(
-        reason="middleware as a class methods is not supported yet"
-    )
     @pytest.mark.asyncio
     async def test_middleware_function_as_a_class_method(self, sample):
         """Test that class methods can be converted into a middleware without
@@ -175,7 +172,7 @@ class TestMiddleware:
 
         assert (
             await tc.first_middleware.run(
-                *sample_args, ctx=sample_ctx, next=next, **sample_kwargs
+                tc, *sample_args, ctx=sample_ctx, next=next, **sample_kwargs
             )
             == 42
         )

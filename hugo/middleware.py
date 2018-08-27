@@ -68,12 +68,21 @@ class Middleware(abc.ABC):
     def __init__(self):
         self.fn = None
 
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        return types.MethodType(self, obj)
+
     @abc.abstractmethod
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         """Middleware's main logic.
 
         .. note::
             Context is a keyword parameter.
+
+        .. warning::
+            This method is not intented to call it directly. Call middleware as
+            function.
 
         Parameters
         ----------
@@ -213,7 +222,7 @@ class MiddlewareChain(MiddlewareCollection):
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
-                lambda current, next: lambda *args, ctx, **kwargs: current.run(
+                lambda current, next: lambda *args, ctx, **kwargs: current(
                     *args, ctx=ctx, next=next, **kwargs
                 )
             )(current, next)
@@ -281,7 +290,7 @@ class OneOfAll(MiddlewareCollection):
 
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         for mw in self.collection:
-            result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
+            result = await mw(*args, ctx=ctx, next=next, **kwargs)
 
             if self.is_successful_result(result):
                 return result
