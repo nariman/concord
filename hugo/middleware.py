@@ -55,7 +55,7 @@ class Middleware(abc.ABC):
 
     Attributes
     ----------
-    fn : Optional[:any:`typing.Callable`]
+    fn : Optional[Callable]
         The source function, when the last middleware in the middleware chain is
         a converted function or it is a converted function itself. Can be not
         presented, if middleware chain created not with :func:`middleware`
@@ -68,21 +68,12 @@ class Middleware(abc.ABC):
     def __init__(self):
         self.fn = None
 
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        return types.MethodType(self, obj)
-
     @abc.abstractmethod
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         """Middleware's main logic.
 
         .. note::
             Context is a keyword parameter.
-
-        .. warning::
-            This method is not intented to call it directly. Call middleware as
-            function.
 
         Parameters
         ----------
@@ -93,7 +84,7 @@ class Middleware(abc.ABC):
                 Provided context can be replaced and passed to the next
                 middleware, but do it only if needed.
 
-        next : callable
+        next : Callable
             The next function to call. Not necessarily a middleware. Pass
             context, all positional and keyword parameters, even if unused.
             Should be awaited.
@@ -129,7 +120,7 @@ class MiddlewareFunction(Middleware):
 
     Parameters
     ----------
-    fn : callable
+    fn : Callable
         A function to convert into a middleware. Should be a coroutine.
 
     Raises
@@ -139,7 +130,7 @@ class MiddlewareFunction(Middleware):
 
     Attributes
     ----------
-    fn : callable
+    fn : Callable
         A function converted into a middleware. A coroutine.
     """
 
@@ -153,6 +144,33 @@ class MiddlewareFunction(Middleware):
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         """Invoke function as a middleware with given parameters."""
         return await self.fn(*args, ctx=ctx, next=next, **kwargs)
+
+
+class MiddlewareState(Middleware):
+    """Middleware class that can provide a state for next middleware.
+
+    It is an alternative to middleware as class methods.
+
+    By default, just adds given state to parameters for the next middleware as
+    `state` parameter.
+
+    Parameters
+    ----------
+    state : :any:`typing.Any`
+        A state to provide.
+
+    Attributes
+    ----------
+    fn : Callable
+        A state for the next middleware.
+    """
+
+    def __init__(self, state):
+        super().__init__()
+        self.state = state
+
+    async def run(self, *args, ctx: context.Context, next, **kwargs):
+        return await next(*args, ctx=ctx, state=self.state, **kwargs)
 
 
 class MiddlewareCollection(Middleware, abc.ABC):
@@ -218,23 +236,29 @@ class MiddlewareChain(MiddlewareCollection):
     def __init__(self):
         super().__init__()
 
+    def add_middleware(self, middleware: Middleware):
+        super().add_middleware(middleware)
+        if len(self.collection) == 1:
+            self.fn = middleware.fn
+        return middleware
+
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
-                lambda current, next: lambda *args, ctx, **kwargs: current(
+                lambda current, next: lambda *args, ctx, **kwargs: current.run(
                     *args, ctx=ctx, next=next, **kwargs
                 )
             )(current, next)
         return await next(*args, ctx=ctx, **kwargs)
 
 
-def as_middleware(fn):
+def as_middleware(fn: typing.Callable):
     """Convert function into a middleware.
 
-    If you are planning to chain the decorated function with another middleware,
-    just use :func:`middleware` decorator. It will convert the function into
-    a middleware for you, if needed.
+    If you are planning to chain the converted function with another middleware,
+    just use :func:`middleware` helper. It will convert the function into a
+    middleware for you, if needed.
 
     .. warning::
 
@@ -242,11 +266,53 @@ def as_middleware(fn):
 
     Parameters
     ----------
-    fn : callable
+    fn : Callable
         A function to convert into a middleware.
     """
     # We don't care, when somebody is convering a middleware into another one...
     return MiddlewareFunction(fn)
+
+
+def collection_of(
+    collection_class: typing.Type[MiddlewareCollection],
+    middleware: typing.Sequence[typing.Union[Middleware, typing.Callable]],
+):
+    """Create a new collection of given middleware.
+
+    If any of given parameters is not a middleware, it will be converted into a
+    middleware for you.
+
+    Parameters
+    ----------
+    collection : Type[:class:`MiddlewareCollection`]
+        A collection class to create collection of.
+    middleware : Sequence[Union[Middleware, Callable]]
+        A list of middleware to create collection of.
+    """
+    collection = collection_class()
+
+    for mw in middleware:
+        if not isinstance(mw, Middleware):
+            mw = as_middleware(mw)
+        collection.add_middleware(mw)
+    #
+    return collection
+
+
+def chain_of(
+    middleware: typing.Sequence[typing.Union[Middleware, typing.Callable]]
+):
+    """Create a new chain of given middleware.
+
+    If any of given parameters is not a middleware, it will be converted into a
+    middleware for you.
+
+    Parameters
+    ----------
+    middleware : Sequence[Union[Middleware, Callable]]
+        A list of middleware to create collection of.
+    """
+    return collection_of(MiddlewareChain, middleware)
 
 
 def middleware(outer_middleware: Middleware):
@@ -265,18 +331,12 @@ def middleware(outer_middleware: Middleware):
 
     def decorator(inner_middleware: Middleware):
         if isinstance(inner_middleware, MiddlewareChain):
-            middleware_chain = inner_middleware
-        else:
-            middleware_chain = MiddlewareChain()
-
-            if not isinstance(inner_middleware, Middleware):
-                inner_middleware = as_middleware(inner_middleware)
-            #
-            middleware_chain.add_middleware(inner_middleware)
-            middleware_chain.fn = inner_middleware.fn
+            inner_middleware.add_middleware(outer_middleware)
+            return inner_middleware
         #
-        middleware_chain.add_middleware(outer_middleware)
-        return middleware_chain
+        return collection_of(
+            MiddlewareChain, [inner_middleware, outer_middleware]
+        )
 
     return decorator
 
@@ -290,7 +350,7 @@ class OneOfAll(MiddlewareCollection):
 
     async def run(self, *args, ctx: context.Context, next, **kwargs):
         for mw in self.collection:
-            result = await mw(*args, ctx=ctx, next=next, **kwargs)
+            result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
 
             if self.is_successful_result(result):
                 return result
