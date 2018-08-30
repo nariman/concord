@@ -21,12 +21,14 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import discord
+from .constants import EventType
 
 
 class Context:
-    """Discord message processing context."""
+    """Event processing context."""
 
-    def __init__(self, bot, message: discord.Message):
-        self.bot = bot
-        self.message = message
+    def __init__(self, client, event: EventType, *args, **kwargs):
+        self.client = client
+        self.event = event
+        self.args = list(args)
+        self.kwargs = kwargs

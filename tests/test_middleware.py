@@ -28,9 +28,9 @@ from hugo import middleware
 
 
 @pytest.fixture(scope="function")
-async def sample(bot_instance):
+async def sample(client_instance):
     """Return sample context, positional and keyword arguments."""
-    ctx = context.Context(bot_instance, None)
+    ctx = context.Context(client_instance, None)
     args = [1, "2"]
     kwargs = {"k": 1, "v": "2"}
 

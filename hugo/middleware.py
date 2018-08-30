@@ -24,7 +24,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import enum
-import types
 import typing
 
 from . import context
@@ -169,7 +168,7 @@ class MiddlewareState(Middleware):
         super().__init__()
         self.state = state
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
         return await next(*args, ctx=ctx, state=self.state, **kwargs)
 
 
@@ -219,7 +218,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
         return middleware
 
     @abc.abstractmethod
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
         pass  # pragma: no cover
 
 
@@ -236,13 +235,13 @@ class MiddlewareChain(MiddlewareCollection):
     def __init__(self):
         super().__init__()
 
-    def add_middleware(self, middleware: Middleware):
+    def add_middleware(self, middleware: Middleware):  # noqa: D102
         super().add_middleware(middleware)
         if len(self.collection) == 1:
             self.fn = middleware.fn
         return middleware
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
@@ -348,7 +347,7 @@ class OneOfAll(MiddlewareCollection):
     See :class:`Middleware` for information about successful results.
     """
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
         for mw in self.collection:
             result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
 

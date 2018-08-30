@@ -23,10 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import asyncio
 
-import discord
 import pytest
 
-from hugo import bot
+from hugo import client
 
 
 @pytest.fixture(scope="module")
@@ -40,13 +39,7 @@ def event_loop():
 @pytest.fixture(scope="module")
 @pytest.mark.asyncio
 async def client_instance():
-    """Return Discord Client instance."""
-    client = discord.Client()
-    yield client
-    await client.close()
-
-
-@pytest.fixture(scope="module")
-def bot_instance(client_instance):
-    """Return Bot instance."""
-    return bot.Bot(client_instance)
+    """Return client instance."""
+    cl = client.Client(None)
+    yield cl
+    await cl.close()
