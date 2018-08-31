@@ -160,7 +160,7 @@ class MiddlewareState(Middleware):
 
     Attributes
     ----------
-    fn : Callable
+    state : :any:`typing.Any`
         A state for the next middleware.
     """
 
