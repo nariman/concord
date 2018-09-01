@@ -3,7 +3,8 @@ __pycache__/
 *$py.class
 
 .coverage
-htmlcov/
 .pytest_cache/
+htmlcov/
+
 
 *.log

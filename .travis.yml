@@ -1,0 +1,29 @@
+language: python
+
+stages:
+  - lint
+  - test
+
+python:
+  - "3.6"
+  - "3.7"
+
+install:
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - git clone -b rewrite https://github.com/Rapptz/discord.py.git ./vendor/discord.py
+  - poetry install -v
+
+script:
+  - pytest --cov=hugo
+
+after_success:
+  - codecov
+
+jobs:
+  include:
+    - stage: lint
+      install:
+        - pip install pre-commit
+        - pre-commit install-hooks
+      script:
+        - pre-commit run --all-files
