@@ -168,7 +168,9 @@ class MiddlewareState(Middleware):
         super().__init__()
         self.state = state
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: context.Context, next, **kwargs
+    ):  # noqa: D102
         return await next(*args, ctx=ctx, state=self.state, **kwargs)
 
 
@@ -218,7 +220,9 @@ class MiddlewareCollection(Middleware, abc.ABC):
         return middleware
 
     @abc.abstractmethod
-    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: context.Context, next, **kwargs
+    ):  # noqa: D102
         pass  # pragma: no cover
 
 
@@ -241,7 +245,9 @@ class MiddlewareChain(MiddlewareCollection):
             self.fn = middleware.fn
         return middleware
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: context.Context, next, **kwargs
+    ):  # noqa: D102
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
@@ -347,7 +353,9 @@ class OneOfAll(MiddlewareCollection):
     See :class:`Middleware` for information about successful results.
     """
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: context.Context, next, **kwargs
+    ):  # noqa: D102
         for mw in self.collection:
             result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
 
