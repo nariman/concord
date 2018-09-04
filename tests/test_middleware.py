@@ -173,6 +173,23 @@ class TestMiddleware:
             == 42
         )
 
+        ms = middleware.MiddlewareState(sample_state, key="sample_state_key")
+
+        async def next(*args, ctx, sample_state_key, **kwargs):
+            assert ctx == sample_ctx
+            assert sample_state_key == sample_state
+            assert sample_args == list(args)
+            assert sample_kwargs == kwargs
+
+            return 42
+
+        assert (
+            await ms.run(
+                *sample_args, ctx=sample_ctx, next=next, **sample_kwargs
+            )
+            == 42
+        )
+
     @pytest.mark.asyncio
     async def test_middleware_collection_class_is_abstract(self):
         """Test that middleware collection subclass should implement methods.

@@ -25,7 +25,26 @@ from .constants import EventType
 
 
 class Context:
-    """Event processing context."""
+    """Event processing context.
+
+    Parameters
+    ----------
+    client : :class:`discord.Client`
+        A Discord client instance. Hugo client should be provided in most cases.
+    event : :class:`.constants.EventType`
+        Event's type context is creating for.
+
+    Attributes
+    ----------
+    client : :class:`discord.Client`
+        A Discord client instance.
+    event : :class:`.constants.EventType`
+        Event's type context is created for.
+    args : list
+        Unnamed / positional arguments, which was provided with event.
+    kargs : dict
+        Keyword arguments, which was provided with event.
+    """
 
     def __init__(self, client, event: EventType, *args, **kwargs):
         self.client = client

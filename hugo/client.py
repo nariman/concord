@@ -47,7 +47,7 @@ class Client(discord.Client):
     async def default_next_callable(ctx, *args, **kwargs):  # noqa: D401
         """Default callable as the `next` parameter.
 
-        Ideally, it should not be called due to it is just a "right" argument
+        Ideally, it should not be called due to it is just a "right" parameter
         for event handlers that should ignore next callables.
         """
         pass

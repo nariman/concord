@@ -24,9 +24,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import enum
-import typing
+from typing import Callable, Sequence, Type, Union
 
-from . import context
+from .context import Context
 
 
 class MiddlewareResult(enum.Enum):
@@ -68,7 +68,7 @@ class Middleware(abc.ABC):
         self.fn = None
 
     @abc.abstractmethod
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: Context, next, **kwargs):
         """Middleware's main logic.
 
         .. note::
@@ -109,7 +109,7 @@ class Middleware(abc.ABC):
             return False
         return True
 
-    async def __call__(self, *args, ctx: context.Context, next, **kwargs):
+    async def __call__(self, *args, ctx: Context, next, **kwargs):
         """Invoke middleware with given parameters."""
         return await self.run(*args, ctx=ctx, next=next, **kwargs)
 
@@ -140,7 +140,7 @@ class MiddlewareFunction(Middleware):
             raise ValueError("Not a coroutine")
         self.fn = fn
 
-    async def run(self, *args, ctx: context.Context, next, **kwargs):
+    async def run(self, *args, ctx: Context, next, **kwargs):
         """Invoke function as a middleware with given parameters."""
         return await self.fn(*args, ctx=ctx, next=next, **kwargs)
 
@@ -157,21 +157,25 @@ class MiddlewareState(Middleware):
     ----------
     state : :any:`typing.Any`
         A state to provide.
+    key : str
+        A parameter name, by which a state will be provided.
 
     Attributes
     ----------
     state : :any:`typing.Any`
         A state for the next middleware.
+    key : str
+        A parameter name, by which a state will be provided.
     """
 
-    def __init__(self, state):
+    def __init__(self, state, key="state"):
         super().__init__()
         self.state = state
+        self.key = key
 
-    async def run(
-        self, *args, ctx: context.Context, next, **kwargs
-    ):  # noqa: D102
-        return await next(*args, ctx=ctx, state=self.state, **kwargs)
+    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+        kwargs[self.key] = self.state
+        return await next(*args, ctx=ctx, **kwargs)
 
 
 class MiddlewareCollection(Middleware, abc.ABC):
@@ -220,9 +224,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
         return middleware
 
     @abc.abstractmethod
-    async def run(
-        self, *args, ctx: context.Context, next, **kwargs
-    ):  # noqa: D102
+    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
         pass  # pragma: no cover
 
 
@@ -245,9 +247,7 @@ class MiddlewareChain(MiddlewareCollection):
             self.fn = middleware.fn
         return middleware
 
-    async def run(
-        self, *args, ctx: context.Context, next, **kwargs
-    ):  # noqa: D102
+    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
         # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
@@ -258,7 +258,7 @@ class MiddlewareChain(MiddlewareCollection):
         return await next(*args, ctx=ctx, **kwargs)
 
 
-def as_middleware(fn: typing.Callable):
+def as_middleware(fn: Callable):
     """Convert function into a middleware.
 
     If you are planning to chain the converted function with another middleware,
@@ -279,8 +279,8 @@ def as_middleware(fn: typing.Callable):
 
 
 def collection_of(
-    collection_class: typing.Type[MiddlewareCollection],
-    middleware: typing.Sequence[typing.Union[Middleware, typing.Callable]],
+    collection_class: Type[MiddlewareCollection],
+    middleware: Sequence[Union[Middleware, Callable]],
 ):
     """Create a new collection of given middleware.
 
@@ -304,9 +304,7 @@ def collection_of(
     return collection
 
 
-def chain_of(
-    middleware: typing.Sequence[typing.Union[Middleware, typing.Callable]]
-):
+def chain_of(middleware: Sequence[Union[Middleware, Callable]]):
     """Create a new chain of given middleware.
 
     If any of given parameters is not a middleware, it will be converted into a
@@ -353,9 +351,7 @@ class OneOfAll(MiddlewareCollection):
     See :class:`Middleware` for information about successful results.
     """
 
-    async def run(
-        self, *args, ctx: context.Context, next, **kwargs
-    ):  # noqa: D102
+    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
         for mw in self.collection:
             result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
 
