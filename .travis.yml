@@ -11,7 +11,6 @@ python:
 
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-  - git clone -b rewrite https://github.com/Rapptz/discord.py.git ./vendor/discord.py
   - poetry install -v
 
 script:
