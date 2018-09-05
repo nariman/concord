@@ -7,6 +7,5 @@ extraction:
       setup_py: false
 
     after_prepare:
-      - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-      - poetry install -v
-      - poetry run pip freeze > requirements.txt
+      - pip install tomlkit
+      - python ./scripts/requirements.py
