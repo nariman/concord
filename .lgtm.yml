@@ -4,7 +4,7 @@ extraction:
       version: 3
       requirements_files:
         - requirements.txt
-      setup.py: false
+      setup_py: false
 
     after_prepare:
       - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
