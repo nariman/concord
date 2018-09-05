@@ -9,15 +9,31 @@ REQUIREMENTS_FILE = "requirements.txt"
 if __name__ == "__main__":
     import tomlkit
 
-    lockfile = open(LOCK_FILE)
+    lockfile = tomlkit.parse(open(LOCK_FILE).read())
     depsfile = open(REQUIREMENTS_FILE, "w")
 
-    deps = tomlkit.parse(lockfile.read())
+    deps = []
 
-    for dep in deps["package"]:
+    for dep in lockfile["package"]:
         if dep["category"] == "main":
-            depsfile.write(
-                "{name}=={version}\n".format(
-                    name=dep["name"], version=dep["version"]
+            if "source" not in dep:
+                deps.append(
+                    "{name}=={version}".format(
+                        name=dep["name"], version=dep["version"]
+                    )
                 )
-            )
+            else:
+                if dep["source"]["type"] == "git":
+                    deps.append(
+                        "git+{url}@{ref}".format(
+                            url=dep["source"]["url"],
+                            ref=dep["source"]["reference"],
+                        )
+                    )
+                else:
+                    raise ValueError(
+                        "Unknown source type for {}".format(dep["name"])
+                    )
+
+    depsfile.write("\n".join(deps))
+    depsfile.close()
