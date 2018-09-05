@@ -7,5 +7,6 @@ extraction:
       setup_py: false
 
     after_prepare:
-      - pip install tomlkit
-      - python ./scripts/requirements.py
+      - pip install tomlkit -t ./vendor
+      - PYTHONPATH=./vendor python ./scripts/requirements.py
+      - rm -r ./vendor
