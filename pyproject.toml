@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hugo"
 version = "0.5.2"
-description = "Discord bot library"
+description = "Discord Bot Library"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
