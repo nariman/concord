@@ -26,7 +26,7 @@ import asyncio
 import enum
 from typing import Callable, Sequence, Type, Union
 
-from .context import Context
+from hugo.context import Context
 
 
 class MiddlewareResult(enum.Enum):

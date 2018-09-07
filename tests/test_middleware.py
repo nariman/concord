@@ -23,14 +23,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo import context
 from hugo import middleware
+from hugo.context import Context
 
 
 @pytest.fixture(scope="function")
 async def sample(client_instance):
     """Return sample context, positional and keyword arguments."""
-    ctx = context.Context(client_instance, None)
+    ctx = Context(client_instance, None)
     args = [1, "2"]
     kwargs = {"k": 1, "v": "2"}
 

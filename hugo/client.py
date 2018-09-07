@@ -25,9 +25,9 @@ import asyncio
 
 import discord
 
-from .constants import EventType
-from .context import Context
-from .middleware import Middleware
+from hugo.constants import EventType
+from hugo.context import Context
+from hugo.middleware import Middleware
 
 
 class Client(discord.Client):

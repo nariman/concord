@@ -33,7 +33,6 @@ def event_loop():
     """Return global event loop."""
     loop = asyncio.get_event_loop()
     yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="module")

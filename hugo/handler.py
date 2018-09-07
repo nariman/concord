@@ -25,9 +25,9 @@ import re
 
 import discord
 
-from .constants import EventType
-from .context import Context
-from .middleware import Middleware, MiddlewareResult, middleware
+from hugo.constants import EventType
+from hugo.context import Context
+from hugo.middleware import Middleware, MiddlewareResult, middleware
 
 
 class EventNormalization(Middleware):
