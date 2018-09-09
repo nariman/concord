@@ -25,7 +25,7 @@ import asyncio
 
 import pytest
 
-from hugo import client
+from hugo.core import client
 
 
 @pytest.fixture(scope="module")

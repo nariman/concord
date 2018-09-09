@@ -23,11 +23,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo import handler
-from hugo import middleware
-from hugo.client import Client
-from hugo.constants import EventType
-from hugo.context import Context
+from hugo.core import handler
+from hugo.core import middleware
+from hugo.core.client import Client
+from hugo.core.constants import EventType
+from hugo.core.context import Context
 
 
 class TestEventNormalization:

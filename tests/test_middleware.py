@@ -23,8 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo import middleware
-from hugo.context import Context
+from hugo.core import middleware
+from hugo.core.context import Context
 
 
 @pytest.fixture(scope="function")

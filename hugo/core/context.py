@@ -21,4 +21,33 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__version__ = "0.5.2"
+from hugo.core.constants import EventType
+
+
+class Context:
+    """Event processing context.
+
+    Parameters
+    ----------
+    client : :class:`discord.Client`
+        A Discord client instance. Hugo client should be provided in most cases.
+    event : :class:`.constants.EventType`
+        Event's type context is creating for.
+
+    Attributes
+    ----------
+    client : :class:`discord.Client`
+        A Discord client instance.
+    event : :class:`.constants.EventType`
+        Event's type context is created for.
+    args : list
+        Unnamed / positional arguments, which was provided with event.
+    kargs : dict
+        Keyword arguments, which was provided with event.
+    """
+
+    def __init__(self, client, event: EventType, *args, **kwargs):
+        self.client = client
+        self.event = event
+        self.args = list(args)
+        self.kwargs = kwargs
