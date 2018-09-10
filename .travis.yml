@@ -14,7 +14,7 @@ install:
   - poetry install -v
 
 script:
-  - python -m pytest --cov=hugo.core
+  - python -m pytest --cov=hugo
 
 after_success:
   - codecov
