@@ -319,10 +319,7 @@ class TestMiddleware:
 
     @pytest.mark.asyncio
     async def test_middleware_chain_decorator(self, sample):
-        """Test middleware chaining via decorator.
-
-        TODO: Tests for all cases of parameters.
-        """
+        """Test middleware chaining via decorator."""
 
         async def first_middleware(*args, ctx, next, **kwargs):
             pass
@@ -330,9 +327,30 @@ class TestMiddleware:
         async def second_middleware(*args, ctx, next, **kwargs):
             pass
 
-        chain = middleware.middleware(second_middleware)(first_middleware)
+        async def third_middleware(*args, ctx, next, **kwargs):
+            pass
 
+        chain = middleware.middleware(second_middleware)(first_middleware)
         assert isinstance(chain, middleware.MiddlewareChain)
+        assert set([mw.fn for mw in chain.collection]) == set(
+            [first_middleware, second_middleware]
+        )
+
+        chain = middleware.middleware(
+            middleware.as_middleware(second_middleware)
+        )(first_middleware)
+        assert isinstance(chain, middleware.MiddlewareChain)
+        assert set([mw.fn for mw in chain.collection]) == set(
+            [first_middleware, second_middleware]
+        )
+
+        inner_chain = middleware.chain_of([first_middleware, second_middleware])
+        chain = middleware.middleware(third_middleware)(inner_chain)
+        assert isinstance(chain, middleware.MiddlewareChain)
+        assert chain == inner_chain
+        assert set([mw.fn for mw in chain.collection]) == set(
+            [first_middleware, second_middleware, third_middleware]
+        )
 
     @pytest.mark.asyncio
     async def test_one_of_all(self, sample):

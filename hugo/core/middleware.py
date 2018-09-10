@@ -291,7 +291,7 @@ def collection_of(
     ----------
     collection : Type[:class:`MiddlewareCollection`]
         A collection class to create collection of.
-    middleware : Sequence[Union[Middleware, Callable]]
+    middleware : Sequence[Union[:class:`Middleware`, Callable]]
         A list of middleware to create collection of.
     """
     collection = collection_class()
@@ -312,8 +312,8 @@ def chain_of(middleware: Sequence[Union[Middleware, Callable]]):
 
     Parameters
     ----------
-    middleware : Sequence[Union[Middleware, Callable]]
-        A list of middleware to create collection of.
+    middleware : Sequence[Union[:class:`Middleware`, Callable]]
+        A list of middleware to create chain of.
     """
     return collection_of(MiddlewareChain, middleware)
 
@@ -337,9 +337,7 @@ def middleware(outer_middleware: Middleware):
             inner_middleware.add_middleware(outer_middleware)
             return inner_middleware
         #
-        return collection_of(
-            MiddlewareChain, [inner_middleware, outer_middleware]
-        )
+        return chain_of([inner_middleware, outer_middleware])
 
     return decorator
 
