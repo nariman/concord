@@ -24,7 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import enum
-from typing import Callable, Sequence, Type, Union
+from typing import Any, Callable, Sequence, Type, Union
 
 from hugo.core.context import Context
 
@@ -150,32 +150,74 @@ class MiddlewareState(Middleware):
 
     It is an alternative to middleware as class methods.
 
-    By default, just adds given state to parameters for the next middleware as
-    `state` parameter.
+    Every state will be saved in a context and could be found by the state type.
+    If you want to pass state as a parameter, provide a `key` parameter name.
+
+    You can use :meth:`get_state` helper to get state from a context. It is
+    especially useful, when `key` is not provided.
+
+    If a :class:`ContextState` subclass provided as a state, it will be
+    instantiated on every middleware run.
 
     Parameters
     ----------
     state : :any:`typing.Any`
         A state to provide.
-    key : str
+    key : Optional[str]
         A parameter name, by which a state will be provided.
 
     Attributes
     ----------
     state : :any:`typing.Any`
         A state for the next middleware.
-    key : str
-        A parameter name, by which a state will be provided.
+    key : Optional[str]
+        A parameter name, by which a state will be provided as a parameter, if
+        present.
     """
 
-    def __init__(self, state, key="state"):
+    class ContextState:
+        """State that should be instantiated on every middleware run.
+
+        Your state should subclass it.
+        """
+
+        pass
+
+    def __init__(self, state, key=None):
         super().__init__()
         self.state = state
         self.key = key
 
     async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
-        kwargs[self.key] = self.state
+        state = self.state
+        if isinstance(state, type) and issubclass(
+            state, MiddlewareState.ContextState
+        ):
+            state = state()
+
+        if self.key:
+            kwargs[self.key] = state
+        self.set_state(ctx, state)
+
         return await next(*args, ctx=ctx, **kwargs)
+
+    @staticmethod
+    def get_state(ctx: Context, state_type: Type):
+        """Return a state from the context."""
+        MiddlewareState._ensure_context(ctx)
+        return ctx.states.get(state_type)
+
+    @staticmethod
+    def set_state(ctx: Context, state: Any):
+        """Set the state to the context."""
+        MiddlewareState._ensure_context(ctx)
+        ctx.states[type(state)] = state
+
+    @staticmethod
+    def _ensure_context(ctx: Context):
+        """Check is context has states storage, and creates it if necessary."""
+        if getattr(ctx, "states", None) is None:
+            ctx.states = dict()
 
 
 class MiddlewareCollection(Middleware, abc.ABC):

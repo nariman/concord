@@ -149,7 +149,10 @@ class TestMiddleware:
 
     @pytest.mark.asyncio
     async def test_middleware_state(self, sample):
-        """Test middleware state class."""
+        """Test middleware state class.
+
+        TODO: Too many repeated checks...
+        """
         sample_ctx, sample_args, sample_kwargs = sample
 
         class State:
@@ -158,9 +161,13 @@ class TestMiddleware:
         sample_state = State()
         ms = middleware.MiddlewareState(sample_state)
 
-        async def next(*args, ctx, state, **kwargs):
+        async def next(*args, ctx, **kwargs):
             assert ctx == sample_ctx
-            assert state == sample_state
+            assert hasattr(ctx, "states")
+            assert ctx.states.get(State) == sample_state
+            assert (
+                middleware.MiddlewareState.get_state(ctx, State) == sample_state
+            )
             assert sample_args == list(args)
             assert sample_kwargs == kwargs
 
@@ -177,7 +184,38 @@ class TestMiddleware:
 
         async def next(*args, ctx, sample_state_key, **kwargs):
             assert ctx == sample_ctx
+            assert hasattr(ctx, "states")
+            assert ctx.states.get(State) == sample_state
+            assert (
+                middleware.MiddlewareState.get_state(ctx, State) == sample_state
+            )
             assert sample_state_key == sample_state
+            assert sample_args == list(args)
+            assert sample_kwargs == kwargs
+
+            return 42
+
+        assert (
+            await ms.run(
+                *sample_args, ctx=sample_ctx, next=next, **sample_kwargs
+            )
+            == 42
+        )
+
+        class ContextState(middleware.MiddlewareState.ContextState):
+            pass
+
+        ms = middleware.MiddlewareState(ContextState, key="sample_state_key")
+
+        async def next(*args, ctx, sample_state_key, **kwargs):
+            assert ctx == sample_ctx
+            assert isinstance(sample_state_key, ContextState)
+            assert hasattr(ctx, "states")
+            assert ctx.states.get(ContextState) == sample_state_key
+            assert (
+                middleware.MiddlewareState.get_state(ctx, ContextState)
+                == sample_state_key
+            )
             assert sample_args == list(args)
             assert sample_kwargs == kwargs
 
