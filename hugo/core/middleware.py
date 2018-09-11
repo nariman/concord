@@ -189,7 +189,7 @@ class MiddlewareState(Middleware):
 
         pass
 
-    def __init__(self, state, key: Optional[str] = None):
+    def __init__(self, state, *, key: Optional[str] = None):
         super().__init__()
         self.state = state
         self.key = key
