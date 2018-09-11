@@ -21,6 +21,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import discord
+
 from hugo.core.constants import EventType
 
 
@@ -46,7 +48,9 @@ class Context:
         Keyword arguments, which was provided with event.
     """
 
-    def __init__(self, client, event: EventType, *args, **kwargs):
+    def __init__(
+        self, client: discord.Client, event: EventType, *args, **kwargs
+    ):
         self.client = client
         self.event = event
         self.args = list(args)
