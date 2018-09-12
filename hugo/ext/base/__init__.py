@@ -26,3 +26,6 @@ from hugo.ext.base.command import Command, CommandContextState
 from hugo.ext.base.event import EventConstraint, EventNormalization
 from hugo.ext.base.pattern import Pattern
 from hugo.ext.base.user import BotConstraint
+
+
+__version__ = "0.7.0"
