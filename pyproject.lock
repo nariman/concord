@@ -198,6 +198,7 @@ websockets = ">=6.0,<7.0"
 reference = "00a659c6526b2445162b52eaf970adbd22c6d35d"
 type = "git"
 url = "https://github.com/Rapptz/discord.py.git"
+
 [[package]]
 category = "dev"
 description = "Docutils -- Python Documentation Utilities"
@@ -483,7 +484,7 @@ name = "sphinx"
 optional = false
 platform = "any"
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.7.9"
+version = "1.8.0"
 
 [package.dependencies]
 Jinja2 = ">=2.3"
@@ -599,7 +600,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "ba181111b07ad0281d12a950e3f6903bd43273616191c9d8aeaed0a62faf6760"
+content-hash = "71bc010ea7464190fc01e7cd33c453ec3fc68d9907753ef49133a838e08e7a79"
 platform = "*"
 python-versions = "^3.6"
 
@@ -647,7 +648,7 @@ pyyaml = ["3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b", "3
 requests = ["63b52e3c866428a224f97cab011de738c36aec0185aa91cfacd418b5d58911d1", "ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a"]
 six = ["70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9", "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"]
 snowballstemmer = ["919f26a68b2c17a7634da993d91339e288964f93c274f1343e3bbbe2096e1128", "9f3bcd3c401c3e862ec0ebe6d2c069ebc012ce142cce209c098ccb5b09136e89"]
-sphinx = ["217a7705adcb573da5bbe1e0f5cab4fa0bd89fd9342c9159121746f593c2d5a4", "a602513f385f1d5785ff1ca420d9c7eb1a1b63381733b2f0ea8188a391314a86"]
+sphinx = ["95acd6648902333647a0e0564abdb28a74b0a76d2333148aa35e5ed1f56d3c4b", "c091dbdd5cc5aac6eb95d591a819fd18bccec90ffb048ec465b165a48b839b45"]
 sphinx-rtd-theme = ["3b49758a64f8a1ebd8a33cb6cc9093c3935a908b716edfaa5772fd86aac27ef6", "80e01ec0eb711abacb1fa507f3eae8b805ae8fa3e8b057abfdf497e3f644c82c"]
 sphinxcontrib-asyncio = ["96627b1ec4eba08d09ad577ff9416c131910333ef37a2c82a2716e59646739f0"]
 sphinxcontrib-napoleon = ["614b779888629f14dfdfad6c17bffbb6d3813a0a0917a9541651d85384d4d6bd", "cbb31953b15d2102c18f16f02591f92e2614a08ef0218c9e514e2dc4c4f9daf9"]
