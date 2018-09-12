@@ -23,11 +23,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core import handler
 from hugo.core import middleware
 from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
+from hugo.ext.base.event import EventConstraint, EventNormalization
 
 
 class TestEventNormalization:
@@ -35,7 +35,7 @@ class TestEventNormalization:
     async def test_without_positional(self, client_instance):
         args = [1, "2", [1, "2"]]
         kwargs = {"before": 1, "after": "2", "other": [1, "2"]}
-        en = handler.EventNormalization()
+        en = EventNormalization()
         event = EventType.READY
 
         async def check(*_, ctx, **__):
@@ -50,9 +50,9 @@ class TestEventNormalization:
     async def test_with_positional(self, client_instance):
         args = [1, "2", [1, "2"]]
         kwargs = {"other": [1, "2"]}
-        en = handler.EventNormalization()
+        en = EventNormalization()
         event = EventType.MESSAGE_EDIT
-        event_parameters = handler.EventNormalization.EVENTS[event]
+        event_parameters = EventNormalization.EVENTS[event]
 
         async def check(*_, ctx, **__):
             assert len(ctx.args) + len(event_parameters) == len(args)
@@ -70,7 +70,7 @@ class TestEventConstraint:
     @pytest.mark.asyncio
     async def test_ignoring(self, client_instance):
         event = EventType.READY
-        ec = handler.EventConstraint(EventType.MESSAGE)
+        ec = EventConstraint(EventType.MESSAGE)
 
         assert not middleware.Middleware.is_successful_result(
             await ec.run(
@@ -82,7 +82,7 @@ class TestEventConstraint:
     @pytest.mark.asyncio
     async def test_passing(self, client_instance):
         event = EventType.MESSAGE
-        ec = handler.EventConstraint(EventType.MESSAGE)
+        ec = EventConstraint(EventType.MESSAGE)
 
         assert middleware.Middleware.is_successful_result(
             await ec.run(
@@ -90,11 +90,3 @@ class TestEventConstraint:
                 next=Client.default_next_callable,
             )
         )
-
-    def test_decorator(self):
-        event = EventType.MESSAGE
-        ec = handler.event(event)(Client.default_next_callable)
-
-        assert isinstance(ec, middleware.MiddlewareChain)
-        assert isinstance(ec.collection[-1], handler.EventConstraint)
-        assert ec.collection[-1].event == event

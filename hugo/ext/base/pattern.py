@@ -21,4 +21,36 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__version__ = "0.7.0"
+import re
+
+from hugo.core.context import Context
+from hugo.core.middleware import Middleware, MiddlewareResult
+
+
+class Pattern(Middleware):
+    """Message context filter.
+
+    The message should match the given regex pattern to invoke the next
+    middleware.
+
+    Only named subgroups will be passed to the next middleware.
+
+    TODO: Work with different event types.
+
+    Attributes
+    ----------
+    pattern : str
+        The source regex string.
+    """
+
+    def __init__(self, pattern: str):
+        self.pattern = pattern
+
+    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+        result = re.search(self.pattern, ctx.kwargs["message"].content)
+
+        if result:
+            kwargs.update(result.groupdict())
+            return await next(*args, ctx=ctx, **kwargs)
+        #
+        return MiddlewareResult.IGNORE
