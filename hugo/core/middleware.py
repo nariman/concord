@@ -416,3 +416,23 @@ class OneOfAll(MiddlewareCollection):
             if self.is_successful_result(result):
                 return result
         return MiddlewareResult.IGNORE
+
+
+class AllOfAll(MiddlewareCollection):
+    """Middleware group with "ignore success" condition.
+
+    It will process middleware list regardless one or more of them return
+    successful result, and return a tuple of all results. It means, that this
+    middleware always returns successful result.
+    See :class:`Middleware` for information about successful results.
+    """
+
+    async def run(
+        self, *args, ctx: Context, next: Callable, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
+        return tuple(
+            [
+                await mw.run(*args, ctx=ctx, next=next, **kwargs)
+                for mw in self.collection
+            ]
+        )

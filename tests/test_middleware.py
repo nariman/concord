@@ -440,3 +440,32 @@ class TestMiddleware:
             await ooa(*sample_args, ctx=sample_ctx, next=None, **sample_kwargs)
             == middleware.MiddlewareResult.IGNORE
         )
+
+    @pytest.mark.asyncio
+    async def test_all_of_all(self, sample):
+        """Test AllOfAll class."""
+        sample_ctx, sample_args, sample_kwargs = sample
+
+        @middleware.as_middleware
+        async def first_middleware(*args, ctx, next, **kwargs):
+            return middleware.MiddlewareResult.IGNORE
+
+        @middleware.as_middleware
+        async def second_middleware(*args, ctx, next, **kwargs):
+            return 2
+
+        @middleware.as_middleware
+        async def third_middleware(*args, ctx, next, **kwargs):
+            return 3
+
+        ooa = middleware.collection_of(
+            middleware.AllOfAll,
+            [first_middleware, second_middleware, third_middleware],
+        )
+
+        assert await ooa.run(
+            *sample_args, ctx=sample_ctx, next=None, **sample_kwargs
+        ) == (middleware.MiddlewareResult.IGNORE, 2, 3)
+        assert await ooa(
+            *sample_args, ctx=sample_ctx, next=None, **sample_kwargs
+        ) == (middleware.MiddlewareResult.IGNORE, 2, 3)
