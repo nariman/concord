@@ -22,7 +22,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 
-class HugoException(Exception):
+class HugoError(Exception):
     """Base exception class for the library."""
+
+    pass
+
+
+class ExtensionError(HugoError):
+    """Exception class for extension errors."""
 
     pass
