@@ -21,26 +21,10 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
-
-
-class BotConstraint(Middleware):
-    """Message context filter.
-
-    The message should be authored by or not authored by a real user to invoke
-    the next middleware.
-
-    Attributes
-    ----------
-    authored_by_bot : bool
-        Is the message should be authored by bot or not.
-    """
-
-    def __init__(self, *, authored_by_bot: bool):
-        self.authored_by_bot = authored_by_bot
-
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
-        if not self.authored_by_bot ^ ctx.kwargs["message"].author.bot:
-            return await next(*args, ctx=ctx, **kwargs)
-        return MiddlewareResult.IGNORE
+from hugo.ext.base.filters.command import Command, CommandContextState
+from hugo.ext.base.filters.common import (
+    BotFilter,
+    ChannelTypeFilter,
+    EventTypeFilter,
+    PatternFilter,
+)

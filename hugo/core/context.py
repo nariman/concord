@@ -32,14 +32,14 @@ class Context:
     Parameters
     ----------
     client : :class:`discord.Client`
-        A Discord client instance. Hugo client should be provided in most cases.
+        A discord.py client instance.
     event : :class:`.constants.EventType`
         Event's type context is creating for.
 
     Attributes
     ----------
     client : :class:`discord.Client`
-        A Discord client instance.
+        A discord.py client instance.
     event : :class:`.constants.EventType`
         Event's type context is created for.
     args : list

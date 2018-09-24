@@ -21,7 +21,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
+import logging
 
 import discord
 
@@ -30,8 +30,11 @@ from hugo.core.context import Context
 from hugo.core.middleware import Middleware
 
 
+log = logging.getLogger(__name__)
+
+
 class Client(discord.Client):
-    """Wrapper around default library client.
+    """Wrapper around default discord.py library client.
 
     Parameters
     ----------
@@ -41,14 +44,15 @@ class Client(discord.Client):
 
     def __init__(self, root_middleware: Middleware, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.root_middleware = root_middleware
+
+        log.info("Hugo client initialized")
 
     async def default_next_callable(ctx, *args, **kwargs):  # noqa: D401
         """Default callable as the `next` parameter.
 
         Ideally, it should not be called due to it is just a "right" parameter
-        for event handlers that should ignore next callables.
+        for event handlers which should ignore next callables.
         """
         pass
 
@@ -62,12 +66,13 @@ class Client(discord.Client):
             event_type = EventType.UNKNOWN
         #
         ctx = Context(self, event_type, *args, **kwargs)
-        asyncio.ensure_future(
+        log.debug(f"Dispatching event `{event_type}``")
+
+        self.loop.create_task(
             self._run_event(
                 self.root_middleware.run,
                 event,
                 ctx=ctx,
                 next=self.default_next_callable,
-            ),
-            loop=self.loop,
+            )
         )
