@@ -26,29 +26,25 @@ import pytest
 from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import is_successful_result
+from hugo.core.middleware import is_successful_result as isr
 from hugo.ext.base.filters.common import EventTypeFilter
 
 
 @pytest.mark.asyncio
 async def test_ignoring(client):
     event = EventType.READY
-    ec = EventTypeFilter(EventType.MESSAGE)
+    context = Context(client, event)
 
-    assert not is_successful_result(
-        await ec.run(
-            ctx=Context(client, event), next=Client.default_next_callable
-        )
+    etf = EventTypeFilter(EventType.MESSAGE)
+    assert not isr(
+        await etf.run(ctx=context, next=Client.default_next_callable)
     )
 
 
 @pytest.mark.asyncio
 async def test_passing(client):
     event = EventType.MESSAGE
-    ec = EventTypeFilter(event)
+    context = Context(client, event)
 
-    assert is_successful_result(
-        await ec.run(
-            ctx=Context(client, event), next=Client.default_next_callable
-        )
-    )
+    etf = EventTypeFilter(event)
+    assert isr(await etf.run(ctx=context, next=Client.default_next_callable))

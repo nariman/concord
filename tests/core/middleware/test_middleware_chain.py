@@ -50,7 +50,7 @@ async def test_function_propagation():
 
 @pytest.mark.asyncio
 async def test_running_behaviour(context, sample_parameters):
-    sa, skw = sample_parameters
+    sa, skwa = sample_parameters
 
     async def first_mw(*args, ctx, next, **kwargs):
         return await next(*args, ctx=ctx, **kwargs) + 1
@@ -59,11 +59,11 @@ async def test_running_behaviour(context, sample_parameters):
         return await next(*args, ctx=ctx, **kwargs) + 2
 
     async def next(*args, ctx, **kwargs):
-        assert ctx == context and list(args) == sa and kwargs == skw
+        assert ctx == context and list(args) == sa and kwargs == skwa
         return 42
 
     chain = collection_of(MiddlewareChain, [first_mw, second_mw])
-    assert await chain.run(*sa, ctx=context, next=next, **skw) == 42 + 1 + 2
+    assert await chain.run(*sa, ctx=context, next=next, **skwa) == 42 + 1 + 2
 
 
 def test_helper():

@@ -40,6 +40,7 @@ class EventTypeFilter(Middleware):
     """
 
     def __init__(self, event: EventType):
+        super().__init__()
         self.event = event
 
     async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
@@ -65,6 +66,7 @@ class PatternFilter(Middleware):
     """
 
     def __init__(self, pattern: str):
+        super().__init__()
         self.pattern = pattern
 
     async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
@@ -90,6 +92,7 @@ class BotFilter(Middleware):
     """
 
     def __init__(self, *, authored_by_bot: bool):
+        super().__init__()
         self.authored_by_bot = authored_by_bot
 
     async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
@@ -132,6 +135,7 @@ class ChannelTypeFilter(Middleware):
         dm: bool = False,
         group: bool = False,
     ):
+        super().__init__()
         self.text = guild or text
         self.voice = guild or voice
         self.dm = private or dm

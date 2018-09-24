@@ -43,7 +43,7 @@ def test_function_constraints():
 
 @pytest.mark.asyncio
 async def test_running_behaviour(context, sample_parameters):
-    sa, skw = sample_parameters
+    sa, skwa = sample_parameters
 
     async def async_mw(*args, ctx, next, **kwargs):
         return await next(*args, ctx=ctx, **kwargs) + 1
@@ -51,10 +51,10 @@ async def test_running_behaviour(context, sample_parameters):
     mw = MiddlewareFunction(async_mw)
 
     async def next(*args, ctx, **kwargs):
-        assert ctx == context and list(args) == sa and kwargs == skw
+        assert ctx == context and list(args) == sa and kwargs == skwa
         return 42
 
-    assert await mw.run(*sa, ctx=context, next=next, **skw) == 42 + 1
+    assert await mw.run(*sa, ctx=context, next=next, **skwa) == 42 + 1
 
 
 @pytest.mark.asyncio

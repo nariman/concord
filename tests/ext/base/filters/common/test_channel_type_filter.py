@@ -21,24 +21,41 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
+from unittest.mock import Mock
 
+import discord
 import pytest
 
 from hugo.core.client import Client
+from hugo.core.constants import EventType
+from hugo.core.context import Context
+from hugo.core.middleware import is_successful_result as isr
+from hugo.ext.base.filters.common import ChannelTypeFilter
+
+from tests.helpers import make_discord_object
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
-
-
-@pytest.fixture(scope="module")
 @pytest.mark.asyncio
-async def client(event_loop):
-    """Return client instance."""
-    client = Client(None, loop=event_loop)
-    yield client
-    await client.close()
+async def test_passing(client):
+    event = EventType.MESSAGE
+    channel = Mock(spec=discord.TextChannel)
+    context = Context(
+        client, event, message=make_discord_object(0, channel=channel)
+    )
+
+    ctf = ChannelTypeFilter(guild=True)
+    assert isr(await ctf.run(ctx=context, next=Client.default_next_callable))
+
+
+@pytest.mark.asyncio
+async def test_ignoring(client):
+    event = EventType.MESSAGE
+    channel = Mock(spec=discord.DMChannel)
+    context = Context(
+        client, event, message=make_discord_object(0, channel=channel)
+    )
+
+    ctf = ChannelTypeFilter(guild=True)
+    assert not isr(
+        await ctf.run(ctx=context, next=Client.default_next_callable)
+    )

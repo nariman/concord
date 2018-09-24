@@ -40,7 +40,7 @@ def test_class_is_abstract():
 
 @pytest.mark.asyncio
 async def test_running_behaviour(context, sample_parameters):
-    sa, skw = sample_parameters
+    sa, skwa = sample_parameters
 
     class SomeMiddleware(Middleware):
         async def run(self, *args, ctx, next, **kwargs):
@@ -51,11 +51,11 @@ async def test_running_behaviour(context, sample_parameters):
     async def next(*args, ctx, **kwargs):
         assert ctx == context
         assert list(args) == sa
-        assert kwargs == skw
+        assert kwargs == skwa
         return 42
 
-    assert await mw.run(*sa, ctx=context, next=next, **skw) == 42
-    assert await mw(*sa, ctx=context, next=next, **skw) == 42
+    assert await mw.run(*sa, ctx=context, next=next, **skwa) == 42
+    assert await mw(*sa, ctx=context, next=next, **skwa) == 42
 
 
 @pytest.mark.parametrize(

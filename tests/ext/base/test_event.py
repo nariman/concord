@@ -30,21 +30,21 @@ from hugo.ext.base.event import EventNormalization
 
 @pytest.mark.asyncio
 async def test_without_positional(client):
-    sa, skw = [1, "2", [1, "2"]], {"before": 1, "after": "2", "other": [1, "2"]}
+    sa, skwa = [1, "2", [1, "2"]], {"other": [1, "2"]}
 
     en = EventNormalization()
     event = EventType.READY
 
     async def check(*args, ctx, **kwargs):
         assert len(ctx.args) == len(sa)
-        assert len(ctx.kwargs) == len(skw)
+        assert len(ctx.kwargs) == len(skwa)
 
-    await en.run(ctx=Context(client, event, *sa, **skw), next=check)
+    await en.run(ctx=Context(client, event, *sa, **skwa), next=check)
 
 
 @pytest.mark.asyncio
 async def test_with_positional(client):
-    sa, skw = [1, "2", [1, "2"]], {"other": [1, "2"]}
+    sa, skwa = [1, "2", [1, "2"]], {"other": [1, "2"]}
 
     en = EventNormalization()
     event = EventType.MESSAGE_EDIT
@@ -52,9 +52,9 @@ async def test_with_positional(client):
 
     async def check(*args, ctx, **kwargs):
         assert len(ctx.args) + len(event_parameters) == len(sa)
-        assert len(ctx.kwargs) - len(event_parameters) == len(skw)
+        assert len(ctx.kwargs) - len(event_parameters) == len(skwa)
 
         for i, k in enumerate(event_parameters):
             assert ctx.kwargs[k] == sa[i]
 
-    await en.run(ctx=Context(client, event, *sa, **skw), next=check)
+    await en.run(ctx=Context(client, event, *sa, **skwa), next=check)

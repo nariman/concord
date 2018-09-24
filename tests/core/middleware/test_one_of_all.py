@@ -29,7 +29,7 @@ from hugo.core.middleware import MiddlewareResult, OneOfAll, collection_of
 
 @pytest.mark.asyncio
 async def test_running_behaviour(context, sample_parameters):
-    sa, skw = sample_parameters
+    sa, skwa = sample_parameters
 
     async def first_mw(*args, ctx, next, **kwargs):
         return MiddlewareResult.IGNORE
@@ -43,7 +43,7 @@ async def test_running_behaviour(context, sample_parameters):
     ooa = collection_of(OneOfAll, [first_mw, second_mw, third_mw])
     assert (
         await ooa.run(
-            *sa, ctx=context, next=Client.default_next_callable, **skw
+            *sa, ctx=context, next=Client.default_next_callable, **skwa
         )
         == 2
     )
@@ -51,7 +51,7 @@ async def test_running_behaviour(context, sample_parameters):
 
 @pytest.mark.asyncio
 async def test_running_behaviour_with_no_result(context, sample_parameters):
-    sa, skw = sample_parameters
+    sa, skwa = sample_parameters
 
     async def first_mw(*args, ctx, next, **kwargs):
         return MiddlewareResult.IGNORE
@@ -59,7 +59,7 @@ async def test_running_behaviour_with_no_result(context, sample_parameters):
     ooa = collection_of(OneOfAll, [first_mw])
     assert (
         await ooa.run(
-            *sa, ctx=context, next=Client.default_next_callable, **skw
+            *sa, ctx=context, next=Client.default_next_callable, **skwa
         )
         == MiddlewareResult.IGNORE
     )

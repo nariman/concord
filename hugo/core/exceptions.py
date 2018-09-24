@@ -22,13 +22,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 
-class HugoError(Exception):
+class HugoError(Exception):  # pragma: no cover
     """Base exception class for the library."""
 
     pass
 
 
-class ExtensionError(HugoError):
+class ExtensionError(HugoError):  # pragma: no cover
     """Exception class for extension errors."""
 
     pass

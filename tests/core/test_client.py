@@ -26,19 +26,40 @@ import asyncio
 import pytest
 
 from hugo.core.client import Client
+from hugo.core.constants import EventType
+from hugo.core.middleware import Middleware
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
-
-
-@pytest.fixture(scope="module")
 @pytest.mark.asyncio
-async def client(event_loop):
-    """Return client instance."""
-    client = Client(None, loop=event_loop)
-    yield client
+async def test_event_dispatching(event_loop, sample_parameters):
+    sa, skwa = sample_parameters
+    event = "message"
+    result = asyncio.Event()
+
+    class RootMiddleware(Middleware):
+        async def run(self, *args, ctx, next, **kwargs):
+            assert ctx.event == EventType(event)
+            assert ctx.args == sa
+            assert ctx.kwargs == skwa
+            result.set()
+
+    client = Client(RootMiddleware())
+    client.dispatch(event, *sa, **skwa)
+    assert await asyncio.wait_for(result.wait(), timeout=1.0)
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_unknown_event_dispatching(event_loop):
+    event = "firework!"
+    result = asyncio.Event()
+
+    class RootMiddleware(Middleware):
+        async def run(self, *args, ctx, next, **kwargs):
+            assert ctx.event == EventType.UNKNOWN
+            result.set()
+
+    client = Client(RootMiddleware())
+    client.dispatch(event)
+    assert await asyncio.wait_for(result.wait(), timeout=1.0)
     await client.close()

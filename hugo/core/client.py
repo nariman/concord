@@ -54,7 +54,7 @@ class Client(discord.Client):
         Ideally, it should not be called due to it is just a "right" parameter
         for event handlers which should ignore next callables.
         """
-        pass
+        pass  # pragma: no cover
 
     def dispatch(self, event, *args, **kwargs):  # noqa: D401
         """Wrapper around default event dispatcher for a client."""
@@ -66,7 +66,7 @@ class Client(discord.Client):
             event_type = EventType.UNKNOWN
         #
         ctx = Context(self, event_type, *args, **kwargs)
-        log.debug(f"Dispatching event `{event_type}``")
+        log.debug(f"Dispatching event `{event_type}`")
 
         self.loop.create_task(
             self._run_event(
