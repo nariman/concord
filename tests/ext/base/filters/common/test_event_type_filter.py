@@ -21,24 +21,34 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
-
 import pytest
 
 from hugo.core.client import Client
+from hugo.core.constants import EventType
+from hugo.core.context import Context
+from hugo.core.middleware import is_successful_result
+from hugo.ext.base.filters.common import EventTypeFilter
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
-
-
-@pytest.fixture(scope="module")
 @pytest.mark.asyncio
-async def client():
-    """Return client instance."""
-    client = Client(None)
-    yield client
-    await client.close()
+async def test_ignoring(client):
+    event = EventType.READY
+    ec = EventTypeFilter(EventType.MESSAGE)
+
+    assert not is_successful_result(
+        await ec.run(
+            ctx=Context(client, event), next=Client.default_next_callable
+        )
+    )
+
+
+@pytest.mark.asyncio
+async def test_passing(client):
+    event = EventType.MESSAGE
+    ec = EventTypeFilter(event)
+
+    assert is_successful_result(
+        await ec.run(
+            ctx=Context(client, event), next=Client.default_next_callable
+        )
+    )

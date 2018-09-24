@@ -41,6 +41,15 @@ class MiddlewareResult(enum.Enum):
     IGNORE = enum.auto()
 
 
+def is_successful_result(
+    value: Union[MiddlewareResult, Any]
+) -> bool:  # noqa: D401
+    """Returns `True`, if given value is a successful middleware result."""
+    if value == MiddlewareResult.IGNORE:
+        return False
+    return True
+
+
 class Middleware(abc.ABC):
     """Event processing middleware.
 
@@ -105,11 +114,11 @@ class Middleware(abc.ABC):
         pass  # pragma: no cover
 
     @staticmethod
-    def is_successful_result(value: Union[MiddlewareResult, Any]) -> bool:
-        """Return `True`, if given value is a successful middleware result."""
-        if value == MiddlewareResult.IGNORE:
-            return False
-        return True
+    def is_successful_result(
+        value: Union[MiddlewareResult, Any]
+    ) -> bool:  # noqa: D401
+        """Returns `True`, if given value is a successful middleware result."""
+        return is_successful_result(value)
 
     async def __call__(
         self, *args, ctx: Context, next: Callable, **kwargs
@@ -391,6 +400,7 @@ def middleware(outer_middleware: Middleware):
         outer_middleware = as_middleware(outer_middleware)
 
     def decorator(inner_middleware: Middleware) -> MiddlewareChain:
+        # If we already have a chain under the decorator, just add to it.
         if isinstance(inner_middleware, MiddlewareChain):
             inner_middleware.add_middleware(outer_middleware)
             return inner_middleware

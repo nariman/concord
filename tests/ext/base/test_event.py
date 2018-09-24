@@ -23,70 +23,38 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core import middleware
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.ext.base.event import EventConstraint, EventNormalization
+from hugo.ext.base.event import EventNormalization
 
 
-class TestEventNormalization:
-    @pytest.mark.asyncio
-    async def test_without_positional(self, client_instance):
-        args = [1, "2", [1, "2"]]
-        kwargs = {"before": 1, "after": "2", "other": [1, "2"]}
-        en = EventNormalization()
-        event = EventType.READY
+@pytest.mark.asyncio
+async def test_without_positional(client):
+    sa, skw = [1, "2", [1, "2"]], {"before": 1, "after": "2", "other": [1, "2"]}
 
-        async def check(*_, ctx, **__):
-            assert len(ctx.args) == len(args)
-            assert len(ctx.kwargs) == len(kwargs)
+    en = EventNormalization()
+    event = EventType.READY
 
-        await en.run(
-            ctx=Context(client_instance, event, *args, **kwargs), next=check
-        )
+    async def check(*args, ctx, **kwargs):
+        assert len(ctx.args) == len(sa)
+        assert len(ctx.kwargs) == len(skw)
 
-    @pytest.mark.asyncio
-    async def test_with_positional(self, client_instance):
-        args = [1, "2", [1, "2"]]
-        kwargs = {"other": [1, "2"]}
-        en = EventNormalization()
-        event = EventType.MESSAGE_EDIT
-        event_parameters = EventNormalization.EVENTS[event]
-
-        async def check(*_, ctx, **__):
-            assert len(ctx.args) + len(event_parameters) == len(args)
-            assert len(ctx.kwargs) - len(event_parameters) == len(kwargs)
-
-            for i, k in enumerate(event_parameters):
-                assert ctx.kwargs[k] == args[i]
-
-        await en.run(
-            ctx=Context(client_instance, event, *args, **kwargs), next=check
-        )
+    await en.run(ctx=Context(client, event, *sa, **skw), next=check)
 
 
-class TestEventConstraint:
-    @pytest.mark.asyncio
-    async def test_ignoring(self, client_instance):
-        event = EventType.READY
-        ec = EventConstraint(EventType.MESSAGE)
+@pytest.mark.asyncio
+async def test_with_positional(client):
+    sa, skw = [1, "2", [1, "2"]], {"other": [1, "2"]}
 
-        assert not middleware.Middleware.is_successful_result(
-            await ec.run(
-                ctx=Context(client_instance, event),
-                next=Client.default_next_callable,
-            )
-        )
+    en = EventNormalization()
+    event = EventType.MESSAGE_EDIT
+    event_parameters = EventNormalization.EVENTS[event]
 
-    @pytest.mark.asyncio
-    async def test_passing(self, client_instance):
-        event = EventType.MESSAGE
-        ec = EventConstraint(EventType.MESSAGE)
+    async def check(*args, ctx, **kwargs):
+        assert len(ctx.args) + len(event_parameters) == len(sa)
+        assert len(ctx.kwargs) - len(event_parameters) == len(skw)
 
-        assert middleware.Middleware.is_successful_result(
-            await ec.run(
-                ctx=Context(client_instance, event),
-                next=Client.default_next_callable,
-            )
-        )
+        for i, k in enumerate(event_parameters):
+            assert ctx.kwargs[k] == sa[i]
+
+    await en.run(ctx=Context(client, event, *sa, **skw), next=check)

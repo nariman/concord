@@ -21,24 +21,48 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
-
 import pytest
 
-from hugo.core.client import Client
+from hugo.core.middleware import MiddlewareFunction, as_middleware
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
+def test_function_converting():
+    async def mw(*args, ctx, next, **kwargs):
+        pass
+
+    assert MiddlewareFunction(mw).fn == mw
 
 
-@pytest.fixture(scope="module")
+def test_function_constraints():
+    def mw(*args, ctx, next, **kwargs):
+        pass
+
+    with pytest.raises(ValueError):
+        MiddlewareFunction(mw)
+
+
 @pytest.mark.asyncio
-async def client():
-    """Return client instance."""
-    client = Client(None)
-    yield client
-    await client.close()
+async def test_running_behaviour(context, sample_parameters):
+    sa, skw = sample_parameters
+
+    async def async_mw(*args, ctx, next, **kwargs):
+        return await next(*args, ctx=ctx, **kwargs) + 1
+
+    mw = MiddlewareFunction(async_mw)
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context and list(args) == sa and kwargs == skw
+        return 42
+
+    assert await mw.run(*sa, ctx=context, next=next, **skw) == 42 + 1
+
+
+@pytest.mark.asyncio
+async def test_helper():
+    async def mw(*args, ctx, next, **kwargs):
+        pass
+
+    converted_mw = as_middleware(mw)
+
+    assert isinstance(converted_mw, MiddlewareFunction)
+    assert converted_mw.fn == mw
