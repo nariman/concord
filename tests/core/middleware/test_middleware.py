@@ -21,24 +21,46 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
-
 import pytest
 
-from hugo.core.client import Client
+from hugo.core.middleware import (
+    Middleware,
+    MiddlewareResult,
+    is_successful_result,
+)
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
+def test_class_is_abstract():
+    class SomeMiddleware(Middleware):
+        pass
+
+    with pytest.raises(TypeError):
+        SomeMiddleware()
 
 
-@pytest.fixture(scope="module")
 @pytest.mark.asyncio
-async def client(event_loop):
-    """Return client instance."""
-    client = Client(None, loop=event_loop)
-    yield client
-    await client.close()
+async def test_running_behaviour(context, sample_parameters):
+    sa, skwa = sample_parameters
+
+    class SomeMiddleware(Middleware):
+        async def run(self, *args, ctx, next, **kwargs):
+            return await next(*args, ctx=ctx, **kwargs)
+
+    mw = SomeMiddleware()
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context
+        assert list(args) == sa
+        assert kwargs == skwa
+        return 42
+
+    assert await mw.run(*sa, ctx=context, next=next, **skwa) == 42
+    assert await mw(*sa, ctx=context, next=next, **skwa) == 42
+
+
+@pytest.mark.parametrize(
+    "value",
+    [MiddlewareResult.OK, MiddlewareResult.IGNORE, None, True, False, 42, "42"],
+)
+def test_successful_result_helper(value):
+    assert Middleware.is_successful_result(value) == is_successful_result(value)

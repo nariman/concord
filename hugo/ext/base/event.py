@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
+from hugo.core.middleware import Middleware
 
 
 class EventNormalization(Middleware):
@@ -92,21 +92,3 @@ class EventNormalization(Middleware):
             ctx.args = ctx.args[plen:]
         #
         return await next(*args, ctx=ctx, **kwargs)
-
-
-class EventConstraint(Middleware):
-    """Event type filter.
-
-    Attributes
-    ----------
-    event : :class:`hugo.core.constants.EventType`
-        Event type to allow.
-    """
-
-    def __init__(self, event: EventType):
-        self.event = event
-
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
-        if ctx.event == self.event:
-            return await next(*args, ctx=ctx, **kwargs)
-        return MiddlewareResult.IGNORE

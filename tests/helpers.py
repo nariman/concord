@@ -21,24 +21,20 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
-
-import pytest
-
-from hugo.core.client import Client
+import discord
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Return global event loop."""
-    loop = asyncio.get_event_loop()
-    yield loop
+# Discord.py library persistently don't recommend to create models by your
+# own, but we need somehow to test our code.
+# We don't want to use network for testing code that has no network-related or
+# network-dependent parts.
+# We don't want to use discord.py internals to emulate network events.
+# Discord.py is not right.
+def make_discord_object(id: int, **kwargs):
+    """Make :class:`discord.Object` instance with given attributes."""
+    obj = discord.Object(id)
 
+    for k, v in kwargs.items():
+        setattr(obj, k, v)
 
-@pytest.fixture(scope="module")
-@pytest.mark.asyncio
-async def client(event_loop):
-    """Return client instance."""
-    client = Client(None, loop=event_loop)
-    yield client
-    await client.close()
+    return obj

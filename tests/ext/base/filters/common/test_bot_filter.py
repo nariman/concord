@@ -21,36 +21,33 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import re
+import pytest
 
+from hugo.core.client import Client
+from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
+from hugo.core.middleware import is_successful_result as isr
+from hugo.ext.base.filters.common import BotFilter
+
+from tests.helpers import make_discord_object
 
 
-class Pattern(Middleware):
-    """Message context filter.
+@pytest.mark.parametrize("authored_by_bot", [True, False])
+@pytest.mark.parametrize("bot", [True, False])
+@pytest.mark.asyncio
+async def test(client, authored_by_bot, bot):
+    event = EventType.MESSAGE
+    context = Context(
+        client,
+        event,
+        message=make_discord_object(0, author=make_discord_object(1, bot=bot)),
+    )
 
-    The message should match the given regex pattern to invoke the next
-    middleware.
+    bf = BotFilter(authored_by_bot=authored_by_bot)
 
-    Only named subgroups will be passed to the next middleware.
-
-    TODO: Work with different event types.
-
-    Attributes
-    ----------
-    pattern : str
-        The source regex string.
-    """
-
-    def __init__(self, pattern: str):
-        self.pattern = pattern
-
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
-        result = re.search(self.pattern, ctx.kwargs["message"].content)
-
-        if result:
-            kwargs.update(result.groupdict())
-            return await next(*args, ctx=ctx, **kwargs)
-        #
-        return MiddlewareResult.IGNORE
+    if not authored_by_bot ^ bot:
+        assert isr(await bf.run(ctx=context, next=Client.default_next_callable))
+    else:
+        assert not isr(
+            await bf.run(ctx=context, next=Client.default_next_callable)
+        )

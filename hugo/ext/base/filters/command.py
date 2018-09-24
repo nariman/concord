@@ -62,6 +62,7 @@ class Command(Middleware):
         prefix: bool = False,
         rest_pattern: Optional[str] = None,
     ):
+        super().__init__()
         self.name = name
         self.prefix = prefix
         self.rest_pattern = rest_pattern
@@ -112,5 +113,7 @@ class Command(Middleware):
             if result:
                 kwargs.update(result.groupdict())
                 state.last_position += result.end()
+            else:
+                return MiddlewareResult.IGNORE
         #
         return await next(*args, ctx=ctx, **kwargs)

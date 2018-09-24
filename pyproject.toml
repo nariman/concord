@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hugo-core"
-version = "0.7.0"
+version = "0.8.0"
 description = "Core library for Hugo"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"

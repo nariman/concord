@@ -21,26 +21,48 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
+import pytest
+
+from hugo.core.middleware import MiddlewareFunction, as_middleware
 
 
-class BotConstraint(Middleware):
-    """Message context filter.
+def test_function_converting():
+    async def mw(*args, ctx, next, **kwargs):
+        pass
 
-    The message should be authored by or not authored by a real user to invoke
-    the next middleware.
+    assert MiddlewareFunction(mw).fn == mw
 
-    Attributes
-    ----------
-    authored_by_bot : bool
-        Is the message should be authored by bot or not.
-    """
 
-    def __init__(self, *, authored_by_bot: bool):
-        self.authored_by_bot = authored_by_bot
+def test_function_constraints():
+    def mw(*args, ctx, next, **kwargs):
+        pass
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
-        if not self.authored_by_bot ^ ctx.kwargs["message"].author.bot:
-            return await next(*args, ctx=ctx, **kwargs)
-        return MiddlewareResult.IGNORE
+    with pytest.raises(ValueError):
+        MiddlewareFunction(mw)
+
+
+@pytest.mark.asyncio
+async def test_running_behaviour(context, sample_parameters):
+    sa, skwa = sample_parameters
+
+    async def async_mw(*args, ctx, next, **kwargs):
+        return await next(*args, ctx=ctx, **kwargs) + 1
+
+    mw = MiddlewareFunction(async_mw)
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context and list(args) == sa and kwargs == skwa
+        return 42
+
+    assert await mw.run(*sa, ctx=context, next=next, **skwa) == 42 + 1
+
+
+@pytest.mark.asyncio
+async def test_helper():
+    async def mw(*args, ctx, next, **kwargs):
+        pass
+
+    converted_mw = as_middleware(mw)
+
+    assert isinstance(converted_mw, MiddlewareFunction)
+    assert converted_mw.fn == mw
