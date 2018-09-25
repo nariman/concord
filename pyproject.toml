@@ -38,7 +38,7 @@ pytest-cov = "^2.5"
 sphinx = "^1.8"
 sphinx_rtd_theme = "^0.4.1"
 sphinxcontrib-asyncio = "^0.2.0"
-sphinxcontrib-napoleon = "^0.6.1"
+sphinxcontrib-napoleon = "^0.7"
 
 [tool.black]
 line-length = 80
