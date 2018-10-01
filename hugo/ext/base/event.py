@@ -21,9 +21,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Any, Union
+
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import Middleware
+from hugo.core.middleware import Middleware, MiddlewareResult
 
 
 class EventNormalization(Middleware):
@@ -84,7 +86,9 @@ class EventNormalization(Middleware):
         EventType.RELATIONSHIP_UPDATE: ("before", "after"),
     }
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: Context, next, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         if ctx.event in self.EVENTS:
             for i, parameter in enumerate(self.EVENTS[ctx.event]):
                 ctx.kwargs[parameter] = ctx.args[i]

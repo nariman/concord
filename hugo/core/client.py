@@ -36,10 +36,8 @@ log = logging.getLogger(__name__)
 class Client(discord.Client):
     """Wrapper around default discord.py library client.
 
-    Parameters
-    ----------
-    root_middleware : :class:`Middleware`
-        A middleware to run on new events.
+    Args:
+        root_middleware: A middleware to run on new events.
     """
 
     def __init__(self, root_middleware: Middleware, *args, **kwargs):
@@ -56,7 +54,7 @@ class Client(discord.Client):
         """
         pass  # pragma: no cover
 
-    def dispatch(self, event, *args, **kwargs):  # noqa: D401
+    def dispatch(self, event: str, *args, **kwargs):  # noqa: D401
         """Wrapper around default event dispatcher for a client."""
         super().dispatch(event, *args, **kwargs)
 

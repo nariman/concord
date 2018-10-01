@@ -21,6 +21,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Any, Dict, List
+
 import discord
 
 from hugo.core.constants import EventType
@@ -29,24 +31,23 @@ from hugo.core.constants import EventType
 class Context:
     """Event processing context.
 
-    Parameters
-    ----------
-    client : :class:`discord.Client`
-        A discord.py client instance.
-    event : :class:`.constants.EventType`
-        Event's type context is creating for.
+    Args:
+        client: A discord.py client instance.
+        event: Event's type context is creating for.
+        *args: Unnamed / positional arguments, which was provided with event.
+        **kwargs: Keyword arguments, which was provided with event.
 
-    Attributes
-    ----------
-    client : :class:`discord.Client`
-        A discord.py client instance.
-    event : :class:`.constants.EventType`
-        Event's type context is created for.
-    args : list
-        Unnamed / positional arguments, which was provided with event.
-    kargs : dict
-        Keyword arguments, which was provided with event.
+    Attributes:
+        client: A discord.py client instance.
+        event: Event's type context is created for.
+        args: Unnamed / positional arguments, which was provided with event.
+        kwargs: Keyword arguments, which was provided with event.
     """
+
+    client: discord.Client
+    event: EventType
+    args: List
+    kwargs: Dict[str, Any]
 
     def __init__(
         self, client: discord.Client, event: EventType, *args, **kwargs

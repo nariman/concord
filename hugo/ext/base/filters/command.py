@@ -31,10 +31,9 @@ from hugo.core.middleware import Middleware, MiddlewareResult, MiddlewareState
 class CommandContextState(MiddlewareState.ContextState):
     """State with information about already processed parts of a message.
 
-    Attributes
-    ----------
-    last_position : int
-        Position in a message string where last match has found and processed.
+    Attributes:
+        last_position: Position in a message string where last match has found
+            and processed.
     """
 
     def __init__(self):
@@ -44,16 +43,25 @@ class CommandContextState(MiddlewareState.ContextState):
 class Command(Middleware):
     """Message context filter.
 
-    Attributes
-    ----------
-    name : str
-        Command name that should be present in a message.
-    prefix : bool
-        Allow command name to be a prefix of the full word (full command name).
-        Useful for global command prefix.
-    rest_pattern : Optional[str]
-        The regex string to process the rest part of a message.
+    Args:
+        name: Command name that should be present in a message.
+        prefix: Allow command name to be a prefix of the full word (full
+            command name).
+            Useful for global command prefix.
+        rest_pattern: The regex string to process the rest part of a message.
+
+    Attributes:
+        name: Command name that should be present in a message.
+        prefix: Is command name could be a prefix of the full word (full
+            command name).
+            Useful for global command prefix.
+        rest_pattern: The regex string that will process the rest part of a
+            message.
     """
+
+    name: str
+    prefix: bool
+    rest_pattern: Optional[str]
 
     def __init__(
         self,

@@ -22,6 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import re
+from typing import Any, Union
 
 import discord
 
@@ -33,17 +34,22 @@ from hugo.core.middleware import Middleware, MiddlewareResult
 class EventTypeFilter(Middleware):
     """Event type filter.
 
-    Attributes
-    ----------
-    event : :class:`hugo.core.constants.EventType`
-        Event type to allow.
+    Args:
+        event: Event type to allow.
+
+    Attributes:
+        event: Event type to allow.
     """
+
+    event: EventType
 
     def __init__(self, event: EventType):
         super().__init__()
         self.event = event
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: Context, next, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         if ctx.event == self.event:
             return await next(*args, ctx=ctx, **kwargs)
         return MiddlewareResult.IGNORE
@@ -59,17 +65,22 @@ class PatternFilter(Middleware):
 
     TODO: Work with different event types.
 
-    Attributes
-    ----------
-    pattern : str
-        The source regex string.
+    Args:
+        pattern: The source regex string.
+
+    Attributes:
+        pattern: The source regex string.
     """
+
+    pattern: str
 
     def __init__(self, pattern: str):
         super().__init__()
         self.pattern = pattern
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: Context, next, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         result = re.search(self.pattern, ctx.kwargs["message"].content)
 
         if result:
@@ -85,17 +96,22 @@ class BotFilter(Middleware):
     The message should be authored by or not authored by a real user to invoke
     the next middleware.
 
-    Attributes
-    ----------
-    authored_by_bot : bool
-        Is the message should be authored by bot or not.
+    Args:
+        authored_by_bot: Is the message should be authored by bot or not.
+
+    Attributes:
+        authored_by_bot: Is the message should be authored by bot or not.
     """
+
+    authored_by_bot: bool
 
     def __init__(self, *, authored_by_bot: bool):
         super().__init__()
         self.authored_by_bot = authored_by_bot
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: Context, next, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         if not self.authored_by_bot ^ ctx.kwargs["message"].author.bot:
             return await next(*args, ctx=ctx, **kwargs)
         return MiddlewareResult.IGNORE
@@ -109,21 +125,29 @@ class ChannelTypeFilter(Middleware):
 
     TODO: Work with different event types.
 
-    Attributes
-    ----------
-    guild : bool
-        Is the channel should be a guild channel.
-    private : bool
-        Is the channel should be a private channel (DM or group).
-    text : bool
-        Is the channel should be a guild text channel.
-    voice : bool
-        Is the channel should be a guild voice channel.
-    dm : bool
-        Is the channel should be a private DM channel.
-    group : bool
-        Is the channel should be a private group channel.
+    Args:
+        guild: Is the channel should be a guild channel.
+        private: Is the channel should be a private channel (DM or group).
+        text: Is the channel should be a guild text channel.
+        voice: Is the channel should be a guild voice channel.
+        dm: Is the channel should be a private DM channel.
+        group: Is the channel should be a private group channel.
+
+    Attributes:
+        guild: Is the channel should be a guild channel.
+        private: Is the channel should be a private channel (DM or group).
+        text: Is the channel should be a guild text channel.
+        voice: Is the channel should be a guild voice channel.
+        dm: Is the channel should be a private DM channel.
+        group: Is the channel should be a private group channel.
     """
+
+    guild: bool
+    private: bool
+    text: bool
+    voice: bool
+    dm: bool
+    group: bool
 
     def __init__(
         self,
@@ -141,7 +165,9 @@ class ChannelTypeFilter(Middleware):
         self.dm = private or dm
         self.group = private or group
 
-    async def run(self, *args, ctx: Context, next, **kwargs):  # noqa: D102
+    async def run(
+        self, *args, ctx: Context, next, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         channel = ctx.kwargs["message"].channel
 
         # fmt: off
