@@ -68,19 +68,47 @@ async def test_running_behaviour_with_key(context, sample_parameters):
 
 
 @pytest.mark.asyncio
-async def test_running_behaviour_with_context_state(context, sample_parameters):
+async def test_running_behaviour_with_class_state(context, sample_parameters):
     sa, skwa = sample_parameters
 
-    class ContextState(MiddlewareState.ContextState):
+    class State:
         pass
 
-    ms = MiddlewareState(ContextState)
+    ms = MiddlewareState(State)
+
+    assert ms.state == State
 
     async def next(*args, ctx, **kwargs):
         assert ctx == context and list(args) == sa and kwargs == skwa
-        assert isinstance(
-            MiddlewareState.get_state(ctx, ContextState), ContextState
-        )
+        assert isinstance(MiddlewareState.get_state(ctx, State), State)
         return 42
 
     assert await ms.run(*sa, ctx=context, next=next, **skwa) == 42
+    assert isinstance(ms.state, State)
+
+    prev_state = ms.state
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context and list(args) == sa and kwargs == skwa
+        assert MiddlewareState.get_state(ctx, State) == prev_state
+        return 42
+
+    assert await ms.run(*sa, ctx=context, next=next, **skwa) == 42
+
+
+@pytest.mark.asyncio
+async def test_running_behaviour_with_context_state(context, sample_parameters):
+    sa, skwa = sample_parameters
+
+    class State(MiddlewareState.ContextState):
+        pass
+
+    ms = MiddlewareState(State)
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context and list(args) == sa and kwargs == skwa
+        assert isinstance(MiddlewareState.get_state(ctx, State), State)
+        return 42
+
+    assert await ms.run(*sa, ctx=context, next=next, **skwa) == 42
+    assert ms.state == State

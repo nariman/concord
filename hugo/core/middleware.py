@@ -171,6 +171,8 @@ class MiddlewareState(Middleware):
     You can use :meth:`get_state` helper to get state from a context. It is
     especially useful, when `key` is not provided.
 
+    If a class provided as a state, it will be instantiated on first middleware
+    run.
     If a :class:`ContextState` subclass provided as a state, it will be
     instantiated on every middleware run.
 
@@ -207,10 +209,11 @@ class MiddlewareState(Middleware):
         self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         state = self.state
-        if isinstance(state, type) and issubclass(
-            state, MiddlewareState.ContextState
-        ):
-            state = state()
+        if isinstance(state, type):
+            if issubclass(state, MiddlewareState.ContextState):
+                state = state()
+            else:
+                self.state = state = state()
 
         if self.key:
             kwargs[self.key] = state
@@ -339,14 +342,14 @@ def as_middleware(fn: Callable) -> MiddlewareFunction:
     fn : Callable
         A function to convert into a middleware.
     """
-    # We don't care, when somebody is convering a middleware into another one...
+    # We don't care, when somebody is converting a middleware into another one...
     return MiddlewareFunction(fn)
 
 
 def collection_of(
     collection_class: Type[MiddlewareCollection],
     middleware: Sequence[Union[Middleware, Callable]],
-) -> Type[MiddlewareCollection]:
+) -> MiddlewareCollection:
     """Create a new collection of given middleware.
 
     If any of given parameters is not a middleware, it will be converted into a
@@ -354,7 +357,7 @@ def collection_of(
 
     Parameters
     ----------
-    collection : Type[:class:`MiddlewareCollection`]
+    collection_class : Type[:class:`MiddlewareCollection`]
         A collection class to create collection of.
     middleware : Sequence[Union[:class:`Middleware`, Callable]]
         A list of middleware to create collection of.
