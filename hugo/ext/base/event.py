@@ -25,7 +25,18 @@ from typing import Any, Union
 
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
+from hugo.core.middleware import Middleware, MiddlewareResult, MiddlewareState
+
+
+class EventNormalizationContextState(MiddlewareState.ContextState):
+    """State with information about already processed event normalization.
+
+    Attributes:
+        is_processed: Is normalization has been applied.
+    """
+
+    def __init__(self):
+        self.is_processed = False
 
 
 class EventNormalization(Middleware):
@@ -86,13 +97,30 @@ class EventNormalization(Middleware):
         EventType.RELATIONSHIP_UPDATE: ("before", "after"),
     }
 
+    @staticmethod
+    def _get_state(ctx: Context) -> EventNormalizationContextState:
+        state = MiddlewareState.get_state(ctx, EventNormalizationContextState)
+
+        if state is None:
+            state = EventNormalizationContextState()
+            MiddlewareState.set_state(ctx, state)
+        #
+        return state
+
     async def run(
         self, *args, ctx: Context, next, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
-        if ctx.event in self.EVENTS:
-            for i, parameter in enumerate(self.EVENTS[ctx.event]):
-                ctx.kwargs[parameter] = ctx.args[i]
-            plen = len(self.EVENTS[ctx.event])
-            ctx.args = ctx.args[plen:]
-        #
+        if ctx.event not in self.EVENTS:
+            return await next(*args, ctx=ctx, **kwargs)
+
+        state = self._get_state(ctx)
+        if state.is_processed:
+            return await next(*args, ctx=ctx, **kwargs)
+
+        for i, parameter in enumerate(self.EVENTS[ctx.event]):
+            ctx.kwargs[parameter] = ctx.args[i]
+        plen = len(self.EVENTS[ctx.event])
+        ctx.args = ctx.args[plen:]
+
+        state.is_processed = True
         return await next(*args, ctx=ctx, **kwargs)

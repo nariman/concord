@@ -27,11 +27,12 @@ from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import (
+    MiddlewareState,
     chain_of,
     is_successful_result as isr,
     middleware as m,
 )
-from hugo.ext.base.filters.command import Command
+from hugo.ext.base.filters.command import Command, CommandContextState
 
 from tests.helpers import make_discord_object
 
@@ -46,6 +47,28 @@ async def test_simple_command(client):
 
     c = Command("status")
     assert isr(await c.run(ctx=context, next=Client.default_next_callable))
+
+
+@pytest.mark.asyncio
+async def test_context_is_restored_after_processing(client):
+    event = EventType.MESSAGE
+    content = "   StAtuS the rest should be ignored"
+    context = Context(
+        client, event, message=make_discord_object(0, content=content)
+    )
+
+    @m(Command("status"))
+    async def mw(*args, ctx, next, **kwargs):
+        state = MiddlewareState.get_state(ctx, CommandContextState)
+        assert state is not None
+        assert state.last_position > 0
+
+    assert isr(await mw.run(ctx=context, next=Client.default_next_callable))
+
+    # We save the context state, but restore last position number
+    state = MiddlewareState.get_state(context, CommandContextState)
+    assert state is not None
+    assert state.last_position == 0
 
 
 @pytest.mark.asyncio

@@ -39,6 +39,6 @@ def event_loop():
 @pytest.mark.asyncio
 async def client(event_loop):
     """Return client instance."""
-    client = Client(None, loop=event_loop)
+    client = Client(loop=event_loop)
     yield client
     await client.close()

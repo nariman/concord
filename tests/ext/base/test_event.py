@@ -48,6 +48,7 @@ async def test_with_positional(client):
 
     en = EventNormalization()
     event = EventType.MESSAGE_EDIT
+    context = Context(client, event, *sa, **skwa)
     event_parameters = EventNormalization.EVENTS[event]
 
     async def check(*args, ctx, **kwargs):
@@ -56,5 +57,21 @@ async def test_with_positional(client):
 
         for i, k in enumerate(event_parameters):
             assert ctx.kwargs[k] == sa[i]
+
+    await en.run(ctx=context, next=check)
+    # Test one more time, it should process as well
+    await en.run(ctx=context, next=check)
+
+
+@pytest.mark.asyncio
+async def test_unknown(client):
+    sa, skwa = [1, "2", [1, "2"]], {"other": [1, "2"]}
+
+    en = EventNormalization()
+    event = EventType.UNKNOWN
+
+    async def check(*args, ctx, **kwargs):
+        assert len(ctx.args) == len(sa)
+        assert len(ctx.kwargs) == len(skwa)
 
     await en.run(ctx=Context(client, event, *sa, **skwa), next=check)

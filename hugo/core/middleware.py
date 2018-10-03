@@ -44,7 +44,7 @@ class MiddlewareResult(enum.Enum):
 def is_successful_result(
     value: Union[MiddlewareResult, Any]
 ) -> bool:  # noqa: D401
-    """Returns `True`, if given value is a successful middleware result."""
+    """Returns ``True``, if given value is a successful middleware result."""
     if value == MiddlewareResult.IGNORE:
         return False
     return True
@@ -55,7 +55,7 @@ class Middleware(abc.ABC):
 
     Middleware are useful for filtering events or extending functionality.
 
-    Middleware should return something (even `None`) to indicate success,
+    Middleware should return something (even ``None``) to indicate success,
     otherwise :class:`MiddlewareResult` values can be used.
 
     Functions can also be converted into a middleware by using
@@ -110,7 +110,8 @@ class Middleware(abc.ABC):
     def is_successful_result(
         value: Union[MiddlewareResult, Any]
     ) -> bool:  # noqa: D401
-        """Returns `True`, if given value is a successful middleware result."""
+        """Returns ``True``, if given value is a successful middleware
+        result."""
         return is_successful_result(value)
 
     async def __call__(
@@ -148,15 +149,15 @@ class MiddlewareFunction(Middleware):
 
 
 class MiddlewareState(Middleware):
-    """Middleware class that can provide a state for next middleware.
+    """Middleware class that can provide a state for ``next`` function.
 
     It is an alternative to middleware as class methods.
 
     Every state will be saved in a context and could be found by the state type.
-    If you want to pass state as a parameter, provide a `key` parameter name.
+    If you want to pass state as a parameter, provide a ``key`` parameter name.
 
     You can use :meth:`get_state` helper to get state from a context. It is
-    especially useful, when `key` is not provided.
+    especially useful, when ``key`` is not provided.
 
     If a class provided as a state, it will be instantiated on first middleware
     run.
@@ -168,7 +169,7 @@ class MiddlewareState(Middleware):
         key: A parameter name, by which a state will be provided.
 
     Attributes:
-        state: A state for the next middleware.
+        state: A state for the ``next`` function.
         key: A parameter name, by which a state will be provided as a
             parameter, if present.
     """
@@ -279,9 +280,6 @@ class MiddlewareChain(MiddlewareCollection):
             reversed).
     """
 
-    def __init__(self):
-        super().__init__()
-
     def add_middleware(
         self, middleware: Middleware
     ) -> Middleware:  # noqa: D102
@@ -384,6 +382,7 @@ class OneOfAll(MiddlewareCollection):
     """Middleware group with "first success" condition.
 
     It will process middleware list until one of them return successful result.
+
     See :class:`Middleware` for information about successful results.
     """
 
@@ -404,6 +403,7 @@ class AllOfAll(MiddlewareCollection):
     It will process middleware list regardless one or more of them return
     successful result, and return a tuple of all results. It means, that this
     middleware always returns successful result.
+
     See :class:`Middleware` for information about successful results.
     """
 

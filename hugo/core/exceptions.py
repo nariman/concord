@@ -32,3 +32,9 @@ class ExtensionError(HugoError):  # pragma: no cover
     """Exception class for extension errors."""
 
     pass
+
+
+class ExtensionManagerError(HugoError):
+    """Exception class for extension manager errors."""
+
+    pass

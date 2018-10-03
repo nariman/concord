@@ -27,7 +27,7 @@ import discord
 
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import Middleware
+from hugo.core.extension import Manager
 
 
 log = logging.getLogger(__name__)
@@ -40,9 +40,9 @@ class Client(discord.Client):
         root_middleware: A middleware to run on new events.
     """
 
-    def __init__(self, root_middleware: Middleware, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.root_middleware = root_middleware
+        self.extension_manager = Manager()
 
         log.info("Hugo client initialized")
 
@@ -68,7 +68,7 @@ class Client(discord.Client):
 
         self.loop.create_task(
             self._run_event(
-                self.root_middleware.run,
+                self.extension_manager.root_middleware.run,
                 event,
                 ctx=ctx,
                 next=self.default_next_callable,

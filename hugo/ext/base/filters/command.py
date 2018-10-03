@@ -45,15 +45,15 @@ class Command(Middleware):
 
     Args:
         name: Command name that should be present in a message.
-        prefix: Allow command name to be a prefix of the full word (full
-            command name).
+        prefix: Allow command name to be a prefix of the full word (full command
+            name).
             Useful for global command prefix.
         rest_pattern: The regex string to process the rest part of a message.
 
     Attributes:
         name: Command name that should be present in a message.
-        prefix: Is command name could be a prefix of the full word (full
-            command name).
+        prefix: Is command name could be a prefix of the full word (full command
+            name).
             Useful for global command prefix.
         rest_pattern: The regex string that will process the rest part of a
             message.
@@ -94,6 +94,9 @@ class Command(Middleware):
         message = ctx.kwargs["message"]
         name_pattern = rf"{self.name}" if self.prefix else rf"{self.name}\b"
 
+        # Save last position, we should restore it after processing.
+        before_last_position = state.last_position
+
         # We should care about whitespaces on the start and do not forget to
         # count this into state.
         # fmt: off
@@ -124,4 +127,6 @@ class Command(Middleware):
             else:
                 return MiddlewareResult.IGNORE
         #
-        return await next(*args, ctx=ctx, **kwargs)
+        result = await next(*args, ctx=ctx, **kwargs)
+        state.last_position = before_last_position
+        return result
