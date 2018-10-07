@@ -49,13 +49,13 @@ async def test_with_positional(client):
     en = EventNormalization()
     event = EventType.MESSAGE_EDIT
     context = Context(client, event, *sa, **skwa)
-    event_parameters = EventNormalization.EVENTS[event]
+    event_fields = EventNormalization.EVENT_FIELDS[event]
 
     async def check(*args, ctx, **kwargs):
-        assert len(ctx.args) + len(event_parameters) == len(sa)
-        assert len(ctx.kwargs) - len(event_parameters) == len(skwa)
+        assert len(ctx.args) == len(sa)
+        assert len(ctx.kwargs) - len(event_fields) == len(skwa)
 
-        for i, k in enumerate(event_parameters):
+        for i, k in enumerate(event_fields):
             assert ctx.kwargs[k] == sa[i]
 
     await en.run(ctx=context, next=check)

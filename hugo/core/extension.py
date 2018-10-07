@@ -22,15 +22,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import logging
-from typing import Sequence, Type
+from typing import Dict, Sequence, Type, Optional
 
 from hugo.core.exceptions import ExtensionManagerError
 from hugo.core.middleware import (
-    AllOfAll,
     Middleware,
     MiddlewareChain,
     chain_of,
-    collection_of,
+    sequence_of,
 )
 
 
@@ -118,6 +117,11 @@ class Manager:
         _root_middleware_cache: Cached root middleware.
     """
 
+    _extensions: Dict[Type[Extension], Extension]
+    _client_middleware_cache: Optional[Sequence[Middleware]]
+    _extension_middleware_cache: Optional[Sequence[Middleware]]
+    _root_middleware_cache: Optional[Middleware]
+
     def __init__(self):
         self._extensions = {}
         self._client_middleware_cache = None
@@ -152,9 +156,7 @@ class Manager:
     def root_middleware(self) -> MiddlewareChain:
         """Root middleware, a built chain of client and extension middleware."""
         if self._root_middleware_cache is None:
-            chain = chain_of(
-                [collection_of(AllOfAll, self.extension_middleware)]
-            )
+            chain = chain_of([sequence_of(self.extension_middleware)])
             for mw in self.client_middleware:
                 chain.add_middleware(mw)
             self._root_middleware_cache = chain
@@ -198,7 +200,7 @@ class Manager:
         self._root_middleware_cache = None
 
         log.info(
-            f'Extension "{extension.NAME}"'
+            f'Extension "{extension.NAME} "'
             f"(version {extension.VERSION}) has been registered"
         )
 
@@ -228,6 +230,6 @@ class Manager:
         instance.on_unregister(self)
 
         log.info(
-            f'Extension "{extension.NAME}"'
+            f'Extension "{extension.NAME} "'
             f"(version {extension.VERSION}) has been unregistered"
         )

@@ -36,6 +36,8 @@ class CommandContextState(MiddlewareState.ContextState):
             and processed.
     """
 
+    last_position: int
+
     def __init__(self):
         self.last_position = 0
 
@@ -85,7 +87,6 @@ class Command(Middleware):
         #
         return state
 
-    # TODO: Method to rewrite. It looks awful.
     # TODO: What about arabic text?
     async def run(
         self, *args, ctx: Context, next: Callable, **kwargs
@@ -94,39 +95,32 @@ class Command(Middleware):
         message = ctx.kwargs["message"]
         name_pattern = rf"{self.name}" if self.prefix else rf"{self.name}\b"
 
-        # Save last position, we should restore it after processing.
-        before_last_position = state.last_position
+        # We should restore last position after processing.
+        position = 0
 
-        # We should care about whitespaces on the start and do not forget to
+        # And we should care about whitespaces on the start and do not forget to
         # count this into state.
-        # fmt: off
-        message_part = message.content[state.last_position:]
-        message_part_clean = message_part.lstrip()
-        state.last_position += len(message_part) - len(message_part_clean)
-        # fmt: on
-
-        result = re.match(name_pattern, message_part_clean, re.I)
+        part = message.content[state.last_position :]
+        clean = part.lstrip()
+        result = re.match(name_pattern, clean, re.I)
 
         if not result:
             return MiddlewareResult.IGNORE
         #
-        state.last_position += result.end()
+        position += len(part) - len(clean) + result.end()
 
         if self.rest_pattern:
-            # fmt: off
-            message_part = message_part_clean[result.end():]
-            message_part_clean = message_part.lstrip()
-            state.last_position += len(message_part) - len(message_part_clean)
-            # fmt: on
+            part = part[position:]
+            clean = part.lstrip()
+            result = re.match(self.rest_pattern, clean)
 
-            result = re.match(self.rest_pattern, message_part_clean)
-
-            if result:
-                kwargs.update(result.groupdict())
-                state.last_position += result.end()
-            else:
+            if not result:
                 return MiddlewareResult.IGNORE
+
+            kwargs.update(result.groupdict())
+            position += len(part) - len(clean) + result.end()
         #
+        state.last_position += position
         result = await next(*args, ctx=ctx, **kwargs)
-        state.last_position = before_last_position
+        state.last_position -= position
         return result

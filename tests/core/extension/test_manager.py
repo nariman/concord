@@ -28,9 +28,9 @@ import pytest
 from hugo.core.exceptions import ExtensionManagerError
 from hugo.core.extension import Extension, Manager
 from hugo.core.middleware import (
-    AllOfAll,
     Middleware,
     MiddlewareChain,
+    MiddlewareSequence,
     MiddlewareState,
     as_middleware,
 )
@@ -88,9 +88,9 @@ def test_types(extension):
     assert isinstance(manager.client_middleware, Sequence)
     assert isinstance(manager.extension_middleware, Sequence)
 
-    # We have at least one AllOfAll middleware
+    # We have at least one MiddlewareSequence middleware
     assert isinstance(manager.root_middleware, MiddlewareChain)
-    assert isinstance(manager.root_middleware.collection[0], AllOfAll)
+    assert isinstance(manager.root_middleware.collection[0], MiddlewareSequence)
 
 
 def test_registering(extension):

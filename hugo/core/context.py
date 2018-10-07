@@ -31,6 +31,9 @@ from hugo.core.constants import EventType
 class Context:
     """Event processing context.
 
+    .. note::
+        Attributes ``client`` and ``event`` are not supposed to be changed.
+
     Args:
         client: A discord.py client instance.
         event: Event's type context is creating for.

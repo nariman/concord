@@ -24,7 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import enum
-from typing import Any, Callable, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
 from hugo.core.context import Context
 
@@ -174,6 +174,8 @@ class MiddlewareState(Middleware):
             parameter, if present.
     """
 
+    StateType = TypeVar("StateType")
+
     class ContextState:
         """State that should be instantiated on every middleware run.
 
@@ -207,7 +209,9 @@ class MiddlewareState(Middleware):
         return await next(*args, ctx=ctx, **kwargs)
 
     @staticmethod
-    def get_state(ctx: Context, state_type: Type) -> Any:
+    def get_state(
+        ctx: Context, state_type: Type[StateType]
+    ) -> Optional[StateType]:
         """Return a state from the context."""
         MiddlewareState._ensure_context(ctx)
         return ctx.states.get(state_type)
@@ -272,7 +276,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
 
 
 class MiddlewareChain(MiddlewareCollection):
-    """Class for chaining middleware. It is a middleware itself.
+    """Middleware collection for chaining middleware.
 
     Attributes:
         collection: List of middleware to run in a certain order. The first
@@ -291,7 +295,6 @@ class MiddlewareChain(MiddlewareCollection):
     async def run(
         self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
-        # Oh dear! Please, rewrite it...
         for current in self.collection:
             next = (
                 lambda current, next: lambda *args, ctx, **kwargs: current.run(
@@ -299,6 +302,32 @@ class MiddlewareChain(MiddlewareCollection):
                 )
             )(current, next)
         return await next(*args, ctx=ctx, **kwargs)
+
+
+class MiddlewareSequence(MiddlewareCollection):
+    """Middleware collection for sequencing middleware.
+
+    It processes all of the middleware list and returns a tuple of results. But
+    it returns unsuccessful result if all of the results is unsuccessful.
+
+    See :class:`Middleware` for information about successful results.
+    """
+
+    async def run(
+        self, *args, ctx: Context, next: Callable, **kwargs
+    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
+        results = []
+        successful = False
+
+        for mw in self.collection:
+            result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
+            results.append(result)
+            if not successful and self.is_successful_result(result):
+                successful = True
+        #
+        if successful:
+            return tuple(results)
+        return MiddlewareResult.IGNORE
 
 
 def as_middleware(fn: Callable) -> MiddlewareFunction:
@@ -355,6 +384,20 @@ def chain_of(
     return collection_of(MiddlewareChain, middleware)
 
 
+def sequence_of(
+    middleware: Sequence[Union[Middleware, Callable]]
+) -> MiddlewareChain:
+    """Create a new sequence of given middleware.
+
+    If any of given parameters is not a middleware, it will be converted into a
+    middleware for you.
+
+    Args:
+        middleware: A list of middleware to create chain of.
+    """
+    return collection_of(MiddlewareSequence, middleware)
+
+
 def middleware(outer_middleware: Middleware):
     """Append a middleware to the chain. Decorator.
 
@@ -379,9 +422,9 @@ def middleware(outer_middleware: Middleware):
 
 
 class OneOfAll(MiddlewareCollection):
-    """Middleware group with "first success" condition.
+    """Middleware collection with "first success" condition.
 
-    It will process middleware list until one of them return successful result.
+    It processes middleware list until one of them returns successful result.
 
     See :class:`Middleware` for information about successful results.
     """
@@ -391,28 +434,7 @@ class OneOfAll(MiddlewareCollection):
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         for mw in self.collection:
             result = await mw.run(*args, ctx=ctx, next=next, **kwargs)
-
             if self.is_successful_result(result):
                 return result
+        #
         return MiddlewareResult.IGNORE
-
-
-class AllOfAll(MiddlewareCollection):
-    """Middleware group with "ignore success" condition.
-
-    It will process middleware list regardless one or more of them return
-    successful result, and return a tuple of all results. It means, that this
-    middleware always returns successful result.
-
-    See :class:`Middleware` for information about successful results.
-    """
-
-    async def run(
-        self, *args, ctx: Context, next: Callable, **kwargs
-    ) -> Union[MiddlewareResult, Any]:  # noqa: D102
-        return tuple(
-            [
-                await mw.run(*args, ctx=ctx, next=next, **kwargs)
-                for mw in self.collection
-            ]
-        )

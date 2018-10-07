@@ -24,7 +24,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import pytest
 
 from hugo.core.client import Client
-from hugo.core.middleware import AllOfAll, MiddlewareResult, collection_of
+from hugo.core.middleware import (
+    MiddlewareResult,
+    MiddlewareSequence,
+    collection_of,
+    sequence_of,
+)
+
+
+# We use `collection_of` instead of direct instance of `MiddlewareSequence`
+# because we assume that `collection_of` has tested and ok to use and due to the
+# same logic under the hood of `collection_of`.
 
 
 @pytest.mark.asyncio
@@ -37,10 +47,38 @@ async def test_running_behaviour(context, sample_parameters):
     async def second_mw(*args, ctx, next, **kwargs):
         return 2
 
-    async def third_mw(*args, ctx, next, **kwargs):
-        return 3
-
-    ooa = collection_of(AllOfAll, [first_mw, second_mw, third_mw])
+    ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
     assert await ooa.run(
         *sa, ctx=context, next=Client.default_next_callable, **skwa
-    ) == (MiddlewareResult.IGNORE, 2, 3)
+    ) == (MiddlewareResult.IGNORE, 2)
+
+
+@pytest.mark.asyncio
+async def test_running_behaviour_on_ignoring(context, sample_parameters):
+    sa, skwa = sample_parameters
+
+    async def first_mw(*args, ctx, next, **kwargs):
+        return MiddlewareResult.IGNORE
+
+    async def second_mw(*args, ctx, next, **kwargs):
+        return MiddlewareResult.IGNORE
+
+    ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
+    assert (
+        await ooa.run(
+            *sa, ctx=context, next=Client.default_next_callable, **skwa
+        )
+        == MiddlewareResult.IGNORE
+    )
+
+
+def test_helper():
+    async def first_mw(*args, ctx, next, **kwargs):
+        pass
+
+    async def second_mw(*args, ctx, next, **kwargs):
+        pass
+
+    chain = sequence_of([first_mw, second_mw])
+    # Just check that, `collection_of` covers all of the other stuff to check.
+    assert isinstance(chain, MiddlewareSequence)
