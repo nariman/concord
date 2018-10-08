@@ -23,10 +23,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import is_successful_result as isr
+from hugo.core.utils import empty_next_callable
 from hugo.ext.base.filters.common import EventTypeFilter
 
 
@@ -36,9 +36,7 @@ async def test_ignoring(client):
     context = Context(client, event)
 
     etf = EventTypeFilter(EventType.MESSAGE)
-    assert not isr(
-        await etf.run(ctx=context, next=Client.default_next_callable)
-    )
+    assert not isr(await etf.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -47,4 +45,4 @@ async def test_passing(client):
     context = Context(client, event)
 
     etf = EventTypeFilter(event)
-    assert isr(await etf.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await etf.run(ctx=context, next=empty_next_callable))

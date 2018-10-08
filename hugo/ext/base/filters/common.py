@@ -22,7 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import re
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 import discord
 
@@ -48,7 +48,7 @@ class EventTypeFilter(Middleware):
         self.event = event
 
     async def run(
-        self, *args, ctx: Context, next, **kwargs
+        self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         if ctx.event == self.event:
             return await next(*args, ctx=ctx, **kwargs)
@@ -79,7 +79,7 @@ class PatternFilter(Middleware):
         self.pattern = pattern
 
     async def run(
-        self, *args, ctx: Context, next, **kwargs
+        self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         result = re.search(self.pattern, ctx.kwargs["message"].content)
 
@@ -110,7 +110,7 @@ class BotFilter(Middleware):
         self.authored_by_bot = authored_by_bot
 
     async def run(
-        self, *args, ctx: Context, next, **kwargs
+        self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         if not self.authored_by_bot ^ ctx.kwargs["message"].author.bot:
             return await next(*args, ctx=ctx, **kwargs)
@@ -166,7 +166,7 @@ class ChannelTypeFilter(Middleware):
         self.group = private or group
 
     async def run(
-        self, *args, ctx: Context, next, **kwargs
+        self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         channel = ctx.kwargs["message"].channel
 

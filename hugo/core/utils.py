@@ -21,26 +21,17 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import pytest
-
-from hugo.core.client import Client
-from hugo.core.middleware import AllOfAll, MiddlewareResult, collection_of
+from hugo.core.context import Context
 
 
-@pytest.mark.asyncio
-async def test_running_behaviour(context, sample_parameters):
-    sa, skwa = sample_parameters
+async def empty_next_callable(*args, ctx: Context, **kwargs):  # noqa: D401
+    """Empty callable to provide as the ``next`` parameter.
 
-    async def first_mw(*args, ctx, next, **kwargs):
-        return MiddlewareResult.IGNORE
+    In theory, event handlers should ignore ``next`` callable since it makes no
+    sense. But there may be cases when middleware does not know whether to call
+    the ``next`` or not. Empty callable can be provided as a workaround, and
+    middleware can call ``next`` without thinking about it.
 
-    async def second_mw(*args, ctx, next, **kwargs):
-        return 2
-
-    async def third_mw(*args, ctx, next, **kwargs):
-        return 3
-
-    ooa = collection_of(AllOfAll, [first_mw, second_mw, third_mw])
-    assert await ooa.run(
-        *sa, ctx=context, next=Client.default_next_callable, **skwa
-    ) == (MiddlewareResult.IGNORE, 2, 3)
+    Empty callable just immediately returns.
+    """
+    pass  # pragma: no cover

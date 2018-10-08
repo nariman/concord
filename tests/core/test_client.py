@@ -23,11 +23,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import asyncio
 
+import discord
 import pytest
 
-from hugo.core.client import Client
+from hugo.core.client import Client, create_client
 from hugo.core.constants import EventType
-from hugo.core.middleware import Middleware
+from hugo.core.extension import Extension
+from hugo.core.middleware import as_middleware
 
 
 @pytest.mark.asyncio
@@ -36,14 +38,20 @@ async def test_event_dispatching(event_loop, sample_parameters):
     event = "message"
     result = asyncio.Event()
 
-    class RootMiddleware(Middleware):
-        async def run(self, *args, ctx, next, **kwargs):
-            assert ctx.event == EventType(event)
-            assert ctx.args == sa
-            assert ctx.kwargs == skwa
-            result.set()
+    class SomeExtension(Extension):
+        @property
+        def extension_middleware(self):
+            @as_middleware
+            async def mw(*args, ctx, next, **kwargs):
+                assert ctx.event == EventType(event)
+                assert ctx.args == sa
+                assert ctx.kwargs == skwa
+                result.set()
 
-    client = Client(RootMiddleware())
+            return [mw]
+
+    client = Client()
+    client.extension_manager.register_extension(SomeExtension)
     client.dispatch(event, *sa, **skwa)
     assert await asyncio.wait_for(result.wait(), timeout=1.0)
     await client.close()
@@ -54,12 +62,29 @@ async def test_unknown_event_dispatching(event_loop):
     event = "firework!"
     result = asyncio.Event()
 
-    class RootMiddleware(Middleware):
-        async def run(self, *args, ctx, next, **kwargs):
-            assert ctx.event == EventType.UNKNOWN
-            result.set()
+    class SomeExtension(Extension):
+        @property
+        def extension_middleware(self):
+            @as_middleware
+            async def mw(*args, ctx, next, **kwargs):
+                assert ctx.event == EventType.UNKNOWN
+                result.set()
 
-    client = Client(RootMiddleware())
+            return [mw]
+
+    client = Client()
+    client.extension_manager.register_extension(SomeExtension)
     client.dispatch(event)
     assert await asyncio.wait_for(result.wait(), timeout=1.0)
     await client.close()
+
+
+def test_custom_client_creation():
+    class CustomClient(discord.Client):
+        pass
+
+    classes_to_test_on = [discord.AutoShardedClient, CustomClient]
+
+    for klass in classes_to_test_on:
+        instance = create_client(klass)
+        assert isinstance(instance, Client) and isinstance(instance, klass)

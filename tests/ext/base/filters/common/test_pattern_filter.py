@@ -23,10 +23,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import is_successful_result as isr, middleware as m
+from hugo.core.utils import empty_next_callable
 from hugo.ext.base.filters.common import PatternFilter
 
 from tests.helpers import make_discord_object
@@ -42,7 +42,7 @@ async def test_simple_pattern(client):
     )
 
     pf = PatternFilter(pattern)
-    assert isr(await pf.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await pf.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -59,7 +59,7 @@ async def test_pattern_with_named_groups(client):
         assert first == "42"
         assert second == "firework"
 
-    assert isr(await mw.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await mw.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -75,7 +75,7 @@ async def test_pattern_with_named_groups_ignores_unnamed(client):
     async def mw(*args, ctx, next, first, **kwargs):
         assert first == "firework"
 
-    assert isr(await mw.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await mw.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -88,4 +88,4 @@ async def test_ignoring(client):
     )
 
     pf = PatternFilter(pattern)
-    assert not isr(await pf.run(ctx=context, next=Client.default_next_callable))
+    assert not isr(await pf.run(ctx=context, next=empty_next_callable))

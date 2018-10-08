@@ -21,8 +21,16 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.base.event import EventNormalization
-from hugo.ext.base.filters import *
+from typing import Sequence
+
+from hugo.core.extension import Extension
 
 
-__version__ = "0.9.0"
+def test_defaults():
+    class SomeExtension(Extension):
+        pass
+
+    extension = SomeExtension()
+
+    assert isinstance(extension.client_middleware, Sequence)
+    assert isinstance(extension.extension_middleware, Sequence)

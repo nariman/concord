@@ -21,8 +21,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.base.event import EventNormalization
-from hugo.ext.base.filters import *
+import pytest
+
+from hugo.core.utils import empty_next_callable
 
 
-__version__ = "0.9.0"
+@pytest.mark.asyncio
+async def test_empty_next_callable_does_nothing(context, sample_parameters):
+    sa, skwa = sample_parameters
+    assert await empty_next_callable(*sa, ctx=context, **skwa) is None

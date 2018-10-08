@@ -23,15 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import (
+    MiddlewareState,
     chain_of,
     is_successful_result as isr,
     middleware as m,
 )
-from hugo.ext.base.filters.command import Command
+from hugo.core.utils import empty_next_callable
+from hugo.ext.base.filters.command import Command, CommandContextState
 
 from tests.helpers import make_discord_object
 
@@ -45,7 +46,29 @@ async def test_simple_command(client):
     )
 
     c = Command("status")
-    assert isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await c.run(ctx=context, next=empty_next_callable))
+
+
+@pytest.mark.asyncio
+async def test_context_is_restored_after_processing(client):
+    event = EventType.MESSAGE
+    content = "   StAtuS the rest should be ignored"
+    context = Context(
+        client, event, message=make_discord_object(0, content=content)
+    )
+
+    @m(Command("status"))
+    async def mw(*args, ctx, next, **kwargs):
+        state = MiddlewareState.get_state(ctx, CommandContextState)
+        assert state is not None
+        assert state.last_position > 0
+
+    assert isr(await mw.run(ctx=context, next=empty_next_callable))
+
+    # We save the context state, but restore last position number
+    state = MiddlewareState.get_state(context, CommandContextState)
+    assert state is not None
+    assert state.last_position == 0
 
 
 @pytest.mark.asyncio
@@ -62,7 +85,7 @@ async def test_simple_command_with_pattern(client):
         assert first == "42"
         assert second == "firework"
 
-    assert isr(await mw.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await mw.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -78,7 +101,7 @@ async def test_simple_command_with_pattern_ignores_unnamed(client):
     async def mw(*args, ctx, next, first, **kwargs):
         assert first == "firework"
 
-    assert isr(await mw.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await mw.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -90,7 +113,7 @@ async def test_ignoring(client):
     )
 
     c = Command("status")
-    assert not isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert not isr(await c.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -103,7 +126,7 @@ async def test_ignoring_by_pattern(client):
     )
 
     c = Command("status", rest_pattern=pattern)
-    assert not isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert not isr(await c.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -115,7 +138,7 @@ async def test_command_nesting(client):
     )
 
     c = chain_of([Command("second"), Command("first")])
-    assert isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await c.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -127,7 +150,7 @@ async def test_command_nesting_for_prefix(client):
     )
 
     c = chain_of([Command("status"), Command("prefix", prefix=True)])
-    assert isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await c.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -139,4 +162,4 @@ async def test_command_nesting_ignoring(client):
     )
 
     c = chain_of([Command("second"), Command("first")])
-    assert not isr(await c.run(ctx=context, next=Client.default_next_callable))
+    assert not isr(await c.run(ctx=context, next=empty_next_callable))

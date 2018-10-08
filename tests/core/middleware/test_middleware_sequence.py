@@ -23,8 +23,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.middleware import MiddlewareResult, OneOfAll, collection_of
+from hugo.core.middleware import (
+    MiddlewareResult,
+    MiddlewareSequence,
+    collection_of,
+    sequence_of,
+)
 from hugo.core.utils import empty_next_callable
+
+
+# We use `collection_of` instead of direct instance of `MiddlewareSequence`
+# because we assume that `collection_of` has tested and ok to use and due to the
+# same logic under the hood of `collection_of`.
 
 
 @pytest.mark.asyncio
@@ -37,24 +47,36 @@ async def test_running_behaviour(context, sample_parameters):
     async def second_mw(*args, ctx, next, **kwargs):
         return 2
 
-    async def third_mw(*args, ctx, next, **kwargs):
-        return 3
-
-    ooa = collection_of(OneOfAll, [first_mw, second_mw, third_mw])
-    assert (
-        await ooa.run(*sa, ctx=context, next=empty_next_callable, **skwa) == 2
-    )
+    ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
+    assert await ooa.run(
+        *sa, ctx=context, next=empty_next_callable, **skwa
+    ) == (MiddlewareResult.IGNORE, 2)
 
 
 @pytest.mark.asyncio
-async def test_running_behaviour_with_no_result(context, sample_parameters):
+async def test_running_behaviour_on_ignoring(context, sample_parameters):
     sa, skwa = sample_parameters
 
     async def first_mw(*args, ctx, next, **kwargs):
         return MiddlewareResult.IGNORE
 
-    ooa = collection_of(OneOfAll, [first_mw])
+    async def second_mw(*args, ctx, next, **kwargs):
+        return MiddlewareResult.IGNORE
+
+    ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
     assert (
         await ooa.run(*sa, ctx=context, next=empty_next_callable, **skwa)
         == MiddlewareResult.IGNORE
     )
+
+
+def test_helper():
+    async def first_mw(*args, ctx, next, **kwargs):
+        pass
+
+    async def second_mw(*args, ctx, next, **kwargs):
+        pass
+
+    chain = sequence_of([first_mw, second_mw])
+    # Just check that, `collection_of` covers all of the other stuff to check.
+    assert isinstance(chain, MiddlewareSequence)
