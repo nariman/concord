@@ -25,7 +25,7 @@ import asyncio
 
 import pytest
 
-from hugo.core.client import Client
+from concord.client import Client
 
 
 @pytest.fixture(scope="session")

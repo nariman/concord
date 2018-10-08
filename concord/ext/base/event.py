@@ -23,9 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from typing import Any, Callable, Union, Dict, Tuple
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult, MiddlewareState
+from concord.constants import EventType
+from concord.context import Context
+from concord.middleware import Middleware, MiddlewareResult, MiddlewareState
 
 
 class EventNormalizationContextState(MiddlewareState.ContextState):

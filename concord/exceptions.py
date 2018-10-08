@@ -21,41 +21,20 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from typing import Any, Dict, List
 
-import discord
+class ConcordError(Exception):
+    """Base exception class for the library."""
 
-from hugo.core.constants import EventType
+    pass
 
 
-class Context:
-    """Event processing context.
+class ExtensionError(ConcordError):
+    """Exception class for third-party extension's errors."""
 
-    .. note::
-        Attributes ``client`` and ``event`` are not supposed to be changed.
+    pass
 
-    Args:
-        client: A discord.py client instance.
-        event: Event's type context is creating for.
-        *args: Unnamed / positional arguments, which was provided with event.
-        **kwargs: Keyword arguments, which was provided with event.
 
-    Attributes:
-        client: A discord.py client instance.
-        event: Event's type context is created for.
-        args: Unnamed / positional arguments, which was provided with event.
-        kwargs: Keyword arguments, which was provided with event.
-    """
+class ExtensionManagerError(ConcordError):
+    """Exception class for extension manager's errors."""
 
-    client: discord.Client
-    event: EventType
-    args: List
-    kwargs: Dict[str, Any]
-
-    def __init__(
-        self, client: discord.Client, event: EventType, *args, **kwargs
-    ):
-        self.client = client
-        self.event = event
-        self.args = list(args)
-        self.kwargs = kwargs
+    pass

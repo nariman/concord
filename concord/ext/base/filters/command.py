@@ -24,8 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import re
 from typing import Any, Callable, Optional, Union
 
-from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult, MiddlewareState
+from concord.context import Context
+from concord.middleware import Middleware, MiddlewareResult, MiddlewareState
 
 
 class CommandContextState(MiddlewareState.ContextState):

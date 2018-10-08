@@ -23,9 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.ext.base.event import EventNormalization
+from concord.constants import EventType
+from concord.context import Context
+from concord.ext.base.event import EventNormalization
 
 
 @pytest.mark.asyncio

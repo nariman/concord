@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.utils import empty_next_callable
+from concord.utils import empty_next_callable
 
 
 @pytest.mark.asyncio

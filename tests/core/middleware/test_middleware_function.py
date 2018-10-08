@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.middleware import MiddlewareFunction, as_middleware
+from concord.middleware import MiddlewareFunction, as_middleware
 
 
 def test_function_converting():

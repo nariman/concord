@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "hugo-core"
-version = "0.9.0"
-description = "Core library for Hugo"
+name = "concord"
+version = "1.0.0"
+description = "Middleware-based event processing library for Discord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/Roolat/hugo-core"
+repository = "https://github.com/Roolat/concord"
 
-keywords = ["discord", "bot", "hugo", "core"]
+keywords = ["discord", "concord", "bot", "core"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 packages = [
-    { include = "hugo" },
+    { include = "concord" },
 ]
 
 [tool.poetry.dependencies]

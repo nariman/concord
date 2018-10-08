@@ -26,10 +26,10 @@ import asyncio
 import discord
 import pytest
 
-from hugo.core.client import Client, create_client
-from hugo.core.constants import EventType
-from hugo.core.extension import Extension
-from hugo.core.middleware import as_middleware
+from concord.client import Client, create_client
+from concord.constants import EventType
+from concord.extension import Extension
+from concord.middleware import as_middleware
 
 
 @pytest.mark.asyncio

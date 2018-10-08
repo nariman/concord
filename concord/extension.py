@@ -24,8 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import logging
 from typing import Dict, Sequence, Type, Optional
 
-from hugo.core.exceptions import ExtensionManagerError
-from hugo.core.middleware import (
+from concord.exceptions import ExtensionManagerError
+from concord.middleware import (
     Middleware,
     MiddlewareChain,
     chain_of,
@@ -182,8 +182,8 @@ class Manager:
         Raises:
             ValueError: If not a type provided or if provided type is not a
                 subclass of :class:`Extension` provided.
-            hugo.exceptions.ExtensionManagerError: If this extension is already
-                registered in this manager.
+            concord.exceptions.ExtensionManagerError: If this extension is
+                already registered in this manager.
         """
         if not isinstance(extension, type):
             raise ValueError("Not a type")
@@ -213,7 +213,7 @@ class Manager:
         Raises:
             ValueError: If not a type provided or if provided type is not a
                 subclass of :class:`Extension` provided.
-            hugo.exceptions.ExtensionManagerError: If this extension is not
+            concord.exceptions.ExtensionManagerError: If this extension is not
                 registered in this manager.
         """
         if not isinstance(extension, type):

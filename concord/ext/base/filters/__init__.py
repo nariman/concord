@@ -21,8 +21,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.base.filters.command import Command, CommandContextState
-from hugo.ext.base.filters.common import (
+from concord.ext.base.filters.command import Command, CommandContextState
+from concord.ext.base.filters.common import (
     BotFilter,
     ChannelTypeFilter,
     EventTypeFilter,

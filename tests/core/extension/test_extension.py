@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from typing import Sequence
 
-from hugo.core.extension import Extension
+from concord.extension import Extension
 
 
 def test_defaults():

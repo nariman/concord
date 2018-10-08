@@ -23,8 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.middleware import MiddlewareResult, OneOfAll, collection_of
-from hugo.core.utils import empty_next_callable
+from concord.middleware import MiddlewareResult, OneOfAll, collection_of
+from concord.utils import empty_next_callable
 
 
 @pytest.mark.asyncio

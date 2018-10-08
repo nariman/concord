@@ -26,10 +26,10 @@ from typing import Type
 
 import discord
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.core.extension import Manager
-from hugo.core.utils import empty_next_callable
+from concord.constants import EventType
+from concord.context import Context
+from concord.extension import Manager
+from concord.utils import empty_next_callable
 
 
 log = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class Client(discord.Client):
         super().__init__(*args, **kwargs)
         self.extension_manager = Manager()
 
-        log.info("Hugo client initialized")
+        log.info("Concord client initialized")
 
     def dispatch(self, event: str, *args, **kwargs):  # noqa: D401
         """Wrapper around default event dispatcher for a client."""

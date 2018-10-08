@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.middleware import MiddlewareResult, is_successful_result
+from concord.middleware import MiddlewareResult, is_successful_result
 
 
 @pytest.mark.parametrize(

@@ -23,11 +23,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.core.middleware import is_successful_result as isr
-from hugo.core.utils import empty_next_callable
-from hugo.ext.base.filters.common import EventTypeFilter
+from concord.constants import EventType
+from concord.context import Context
+from concord.middleware import is_successful_result as isr
+from concord.utils import empty_next_callable
+from concord.ext.base.filters.common import EventTypeFilter
 
 
 @pytest.mark.asyncio

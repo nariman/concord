@@ -21,8 +21,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
+from concord.constants import EventType
+from concord.context import Context
 
 
 def test_context(client, sample_parameters):

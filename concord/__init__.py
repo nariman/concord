@@ -21,8 +21,4 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.base.event import EventNormalization
-from hugo.ext.base.filters import *
-
-
-__version__ = "0.9.0"
+__version__ = "1.0.0"

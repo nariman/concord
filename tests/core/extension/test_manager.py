@@ -25,9 +25,9 @@ from typing import Sequence
 
 import pytest
 
-from hugo.core.exceptions import ExtensionManagerError
-from hugo.core.extension import Extension, Manager
-from hugo.core.middleware import (
+from concord.exceptions import ExtensionManagerError
+from concord.extension import Extension, Manager
+from concord.middleware import (
     Middleware,
     MiddlewareChain,
     MiddlewareSequence,

@@ -26,11 +26,11 @@ from unittest.mock import Mock
 import discord
 import pytest
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.core.middleware import is_successful_result as isr
-from hugo.core.utils import empty_next_callable
-from hugo.ext.base.filters.common import ChannelTypeFilter
+from concord.constants import EventType
+from concord.context import Context
+from concord.middleware import is_successful_result as isr
+from concord.utils import empty_next_callable
+from concord.ext.base.filters.common import ChannelTypeFilter
 
 from tests.helpers import make_discord_object
 

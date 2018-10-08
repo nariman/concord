@@ -21,17 +21,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.core.context import Context
+from concord.ext.base.event import EventNormalization
+from concord.ext.base.filters import *
 
 
-async def empty_next_callable(*args, ctx: Context, **kwargs):  # noqa: D401
-    """Empty callable to provide as the ``next`` parameter.
-
-    In theory, event handlers should ignore ``next`` callable since it makes no
-    sense. But there may be cases when middleware does not know whether to call
-    the ``next`` or not. Empty callable can be provided as a workaround, and
-    middleware can call ``next`` without thinking about it.
-
-    Empty callable just immediately returns.
-    """
-    pass  # pragma: no cover
+__version__ = "1.0.0"

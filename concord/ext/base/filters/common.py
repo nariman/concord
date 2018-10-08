@@ -26,9 +26,9 @@ from typing import Any, Callable, Union
 
 import discord
 
-from hugo.core.constants import EventType
-from hugo.core.context import Context
-from hugo.core.middleware import Middleware, MiddlewareResult
+from concord.constants import EventType
+from concord.context import Context
+from concord.middleware import Middleware, MiddlewareResult
 
 
 class EventTypeFilter(Middleware):
