@@ -21,28 +21,17 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import pytest
-
-from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.middleware import is_successful_result as isr
-from hugo.core.utils import empty_next_callable
-from hugo.ext.base.filters.common import EventTypeFilter
 
 
-@pytest.mark.asyncio
-async def test_ignoring(client):
-    event = EventType.READY
-    context = Context(client, event)
+async def empty_next_callable(*args, ctx: Context, **kwargs):  # noqa: D401
+    """Empty callable to provide as the ``next`` parameter.
 
-    etf = EventTypeFilter(EventType.MESSAGE)
-    assert not isr(await etf.run(ctx=context, next=empty_next_callable))
+    In theory, event handlers should ignore ``next`` callable since it makes no
+    sense. But there may be cases when middleware does not know whether to call
+    the ``next`` or not. Empty callable can be provided as a workaround, and
+    middleware can call ``next`` without thinking about it.
 
-
-@pytest.mark.asyncio
-async def test_passing(client):
-    event = EventType.MESSAGE
-    context = Context(client, event)
-
-    etf = EventTypeFilter(event)
-    assert isr(await etf.run(ctx=context, next=empty_next_callable))
+    Empty callable just immediately returns.
+    """
+    pass  # pragma: no cover

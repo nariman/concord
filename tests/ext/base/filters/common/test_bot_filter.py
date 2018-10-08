@@ -23,10 +23,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import is_successful_result as isr
+from hugo.core.utils import empty_next_callable
 from hugo.ext.base.filters.common import BotFilter
 
 from tests.helpers import make_discord_object
@@ -46,8 +46,6 @@ async def test(client, authored_by_bot, bot):
     bf = BotFilter(authored_by_bot=authored_by_bot)
 
     if not authored_by_bot ^ bot:
-        assert isr(await bf.run(ctx=context, next=Client.default_next_callable))
+        assert isr(await bf.run(ctx=context, next=empty_next_callable))
     else:
-        assert not isr(
-            await bf.run(ctx=context, next=Client.default_next_callable)
-        )
+        assert not isr(await bf.run(ctx=context, next=empty_next_callable))

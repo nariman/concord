@@ -26,10 +26,10 @@ from unittest.mock import Mock
 import discord
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.constants import EventType
 from hugo.core.context import Context
 from hugo.core.middleware import is_successful_result as isr
+from hugo.core.utils import empty_next_callable
 from hugo.ext.base.filters.common import ChannelTypeFilter
 
 from tests.helpers import make_discord_object
@@ -44,7 +44,7 @@ async def test_passing(client):
     )
 
     ctf = ChannelTypeFilter(guild=True)
-    assert isr(await ctf.run(ctx=context, next=Client.default_next_callable))
+    assert isr(await ctf.run(ctx=context, next=empty_next_callable))
 
 
 @pytest.mark.asyncio
@@ -56,6 +56,4 @@ async def test_ignoring(client):
     )
 
     ctf = ChannelTypeFilter(guild=True)
-    assert not isr(
-        await ctf.run(ctx=context, next=Client.default_next_callable)
-    )
+    assert not isr(await ctf.run(ctx=context, next=empty_next_callable))

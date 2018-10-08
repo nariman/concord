@@ -23,13 +23,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.middleware import (
     MiddlewareResult,
     MiddlewareSequence,
     collection_of,
     sequence_of,
 )
+from hugo.core.utils import empty_next_callable
 
 
 # We use `collection_of` instead of direct instance of `MiddlewareSequence`
@@ -49,7 +49,7 @@ async def test_running_behaviour(context, sample_parameters):
 
     ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
     assert await ooa.run(
-        *sa, ctx=context, next=Client.default_next_callable, **skwa
+        *sa, ctx=context, next=empty_next_callable, **skwa
     ) == (MiddlewareResult.IGNORE, 2)
 
 
@@ -65,9 +65,7 @@ async def test_running_behaviour_on_ignoring(context, sample_parameters):
 
     ooa = collection_of(MiddlewareSequence, [first_mw, second_mw])
     assert (
-        await ooa.run(
-            *sa, ctx=context, next=Client.default_next_callable, **skwa
-        )
+        await ooa.run(*sa, ctx=context, next=empty_next_callable, **skwa)
         == MiddlewareResult.IGNORE
     )
 

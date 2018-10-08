@@ -23,9 +23,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import asyncio
 
+import discord
 import pytest
 
-from hugo.core.client import Client
+from hugo.core.client import Client, create_client
 from hugo.core.constants import EventType
 from hugo.core.extension import Extension
 from hugo.core.middleware import as_middleware
@@ -76,3 +77,14 @@ async def test_unknown_event_dispatching(event_loop):
     client.dispatch(event)
     assert await asyncio.wait_for(result.wait(), timeout=1.0)
     await client.close()
+
+
+def test_custom_client_creation():
+    class CustomClient(discord.Client):
+        pass
+
+    classes_to_test_on = [discord.AutoShardedClient, CustomClient]
+
+    for klass in classes_to_test_on:
+        instance = create_client(klass)
+        assert isinstance(instance, Client) and isinstance(instance, klass)

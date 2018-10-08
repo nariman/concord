@@ -23,8 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import pytest
 
-from hugo.core.client import Client
 from hugo.core.middleware import MiddlewareResult, OneOfAll, collection_of
+from hugo.core.utils import empty_next_callable
 
 
 @pytest.mark.asyncio
@@ -42,10 +42,7 @@ async def test_running_behaviour(context, sample_parameters):
 
     ooa = collection_of(OneOfAll, [first_mw, second_mw, third_mw])
     assert (
-        await ooa.run(
-            *sa, ctx=context, next=Client.default_next_callable, **skwa
-        )
-        == 2
+        await ooa.run(*sa, ctx=context, next=empty_next_callable, **skwa) == 2
     )
 
 
@@ -58,8 +55,6 @@ async def test_running_behaviour_with_no_result(context, sample_parameters):
 
     ooa = collection_of(OneOfAll, [first_mw])
     assert (
-        await ooa.run(
-            *sa, ctx=context, next=Client.default_next_callable, **skwa
-        )
+        await ooa.run(*sa, ctx=context, next=empty_next_callable, **skwa)
         == MiddlewareResult.IGNORE
     )
