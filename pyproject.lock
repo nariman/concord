@@ -191,14 +191,14 @@ name = "discord.py"
 optional = false
 platform = "*"
 python-versions = "*"
-version = "1.0.0a1569+g418048b"
+version = "1.0.0a1577+g77239e4"
 
 [package.dependencies]
 aiohttp = ">=3.3.0,<3.5.0"
 websockets = ">=6.0,<7.0"
 
 [package.source]
-reference = "418048b98abef627f57f9e28e268bf3a8668648a"
+reference = "77239e4f1588b7cf99ca54c36665ebfc4ad5bd57"
 type = "git"
 url = "https://github.com/Rapptz/discord.py.git"
 
@@ -345,7 +345,7 @@ name = "pre-commit"
 optional = false
 platform = "*"
 python-versions = "*"
-version = "1.11.0"
+version = "1.11.1"
 
 [package.dependencies]
 "aspy.yaml" = "*"
@@ -606,7 +606,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "71bc010ea7464190fc01e7cd33c453ec3fc68d9907753ef49133a838e08e7a79"
+content-hash = "a66c670933c284d83e623f9e36c5f048fb1659416c9a6b49adcd4f6dc3c52348"
 platform = "*"
 python-versions = "^3.6"
 
@@ -642,7 +642,7 @@ nodeenv = ["aa040ab5189bae17d272175609010be6c5b589ec4b8dbd832cc50c9e9cb7496f"]
 packaging = ["e9215d2d2535d3ae866c3d6efc77d5b24a0192cce0ff20e42896cc0664f889c0", "f019b770dd64e585a99714f1fd5e01c7a8f11b45635aa953fd41c689a657375b"]
 pluggy = ["6e3836e39f4d36ae72840833db137f7b7d35105079aee6ec4a62d9f80d594dd1", "95eb8364a4708392bae89035f45341871286a333f749c3141c20573d2b3876e1"]
 pockets = ["ae6e0908907b5b79bc21e06d472aca403aa88c1a7128a5d3cca33bdfaf76c326", "b25a81479f23219dea890414c70f9d69555633f2d46fc516a70826030d44f95e"]
-pre-commit = ["18ef2892ff6b6518945bc7dcf423e3c969033a4ca132b6a1ae0d52eb2e51ea27", "88d59872610a7069d937b6868632ba534187bda58c4665de12b25c8c549ddd0e"]
+pre-commit = ["3ce9dd5a912e1c0d0fa0c5991927429a62661ca7ed00ee3dc4ca2c743ec259ce", "e7efe81063b8cb2a72190db06109191aac67971fc7a31d9e9485907f6be76954"]
 py = ["06a30435d058473046be836d3fc4f27167fd84c45b99704f2fb5509ef61f9af1", "50402e9d1c9005d759426988a492e0edaadb7f4e68bcddfea586bc7432d009c6"]
 pygments = ["78f3f434bcc5d6ee09020f92ba487f95ba50f1e3ef83ae96b9d5ffa1bab25c5d", "dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"]
 pyparsing = ["905d8090c335314568b5faee0025b1829f27bb974604a5762a6cdef3a7dfc3b7", "f493ee323be1e94929416b3585eefcc04943115cecbaaa35a8c86d1a2368af19"]
