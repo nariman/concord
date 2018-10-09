@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "concord"
+name = "cncrd"
 version = "1.0.0"
 description = "Middleware-based event processing library for Discord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
