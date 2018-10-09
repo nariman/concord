@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/Roolat/concord"
 
-keywords = ["discord", "concord", "bot", "core"]
+keywords = ["discord", "concord", "bot"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -28,17 +28,17 @@ python = "^3.6"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite" }
 
 [tool.poetry.dev-dependencies]
-black = "^18.3-alpha.0"
+black = "^18.9b0"
 codecov = "^2.0"
 coverage = "^4.5"
-pre-commit = "^1.10"
+pre-commit = "^1.11"
 pytest = "^3.8"
 pytest-asyncio = "^0.9.0"
 pytest-cov = "^2.5"
 sphinx = "^1.8"
-sphinx_rtd_theme = "^0.4.1"
+sphinx_rtd_theme = "^0.4.2"
 sphinxcontrib-asyncio = "^0.2.0"
-sphinxcontrib-napoleon = "^0.6.1"
+sphinxcontrib-napoleon = "^0.7"
 
 [tool.black]
 line-length = 80
