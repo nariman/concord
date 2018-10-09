@@ -1,0 +1,34 @@
+language: python
+
+stages:
+  - lint
+  - test
+
+python:
+  - "3.6"
+  - "3.7-dev"
+  - "nightly"
+
+install:
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - poetry install -v
+
+script:
+  - python -m pytest --cov=concord
+
+after_success:
+  - codecov
+
+jobs:
+  include:
+    - stage: lint
+      install:
+        - pip install pre-commit
+        - pre-commit install-hooks
+      script:
+        - pre-commit run --all-files
+
+matrix:
+  fast_finish: true
+  allow_failures:
+  - python: "nightly"

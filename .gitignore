@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+dist/
+
+.coverage
+.pytest_cache/
+htmlcov/
+
+*.log
