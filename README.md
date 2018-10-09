@@ -41,13 +41,13 @@ Example extensions:
 
 ## Installation
 
-You can install the latest version from PyPi:
+You can install the latest version from PyPI:
 
 ```bash
 pip install cncrd  # no vowels!
 ```
 
-Take a note, that `cncrd` has no vowels. PyPi is the only place, where Concord
+Take a note, that `cncrd` has no vowels. PyPI is the only place, where Concord
 is named as `cncrd`.  
 Also, by now, Concord has a specific requirement - `rewrite` branch of
 [discord.py](https://github.com/Rapptz/discord.py). Take care of installing
