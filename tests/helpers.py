@@ -30,6 +30,7 @@ import discord
 # network-dependent parts.
 # We don't want to use discord.py internals to emulate network events.
 # Discord.py is not right.
+# TODO: Maybe we should emulate gateway events.
 def make_discord_object(id: int, **kwargs):
     """Make :class:`discord.Object` instance with given attributes."""
     obj = discord.Object(id)

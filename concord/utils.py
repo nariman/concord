@@ -24,7 +24,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from concord.context import Context
 
 
-async def empty_next_callable(*args, ctx: Context, **kwargs):  # noqa: D401
+async def empty_next_callable(
+    *args, ctx: Context, **kwargs
+) -> None:  # noqa: D401
     """Empty callable to provide as the ``next`` parameter.
 
     In theory, event handlers should ignore ``next`` callable since it makes no

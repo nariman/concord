@@ -25,9 +25,9 @@ import pytest
 
 from concord.constants import EventType
 from concord.context import Context
+from concord.ext.base.filters.common import BotFilter
 from concord.middleware import is_successful_result as isr
 from concord.utils import empty_next_callable
-from concord.ext.base.filters.common import BotFilter
 
 from tests.helpers import make_discord_object
 

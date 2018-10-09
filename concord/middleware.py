@@ -296,6 +296,14 @@ class MiddlewareChain(MiddlewareCollection):
         self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:  # noqa: D102
         for current in self.collection:
+            # We need to save `current` and `next` middleware in a separate
+            # context for each step. Lambda is a life-hack.
+            # It constructs first lambda with last-to-call middleware and `next`
+            # callable, given by outer scope and runs it. Result is an another
+            # lambda, that is can be used as an `next` callable.
+            # Result lambda overwrites `next` in our scope, next cycle uses the
+            # next middleware in chain order and overwritten `next` callable.
+            # In the end, a lambda chain will be constructed.
             next = (
                 lambda current, next: lambda *args, ctx, **kwargs: current.run(
                     *args, ctx=ctx, next=next, **kwargs

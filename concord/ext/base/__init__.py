@@ -22,7 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from concord.ext.base.event import EventNormalization
-from concord.ext.base.filters import *
+from concord.ext.base.filters import *  # it's okay, we control it
 
 
 __version__ = "1.0.0"

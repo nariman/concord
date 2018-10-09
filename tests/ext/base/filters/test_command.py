@@ -25,6 +25,7 @@ import pytest
 
 from concord.constants import EventType
 from concord.context import Context
+from concord.ext.base.filters.command import Command, CommandContextState
 from concord.middleware import (
     MiddlewareState,
     chain_of,
@@ -32,7 +33,6 @@ from concord.middleware import (
     middleware as m,
 )
 from concord.utils import empty_next_callable
-from concord.ext.base.filters.command import Command, CommandContextState
 
 from tests.helpers import make_discord_object
 
