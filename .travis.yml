@@ -11,7 +11,9 @@ python:
 
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-  - poetry install -v
+  # Poetry isolates itself; We need to update PATH in current shell
+  - source $HOME/.poetry/env
+  - poetry install -vvv
 
 script:
   - python -m pytest --cov=concord
