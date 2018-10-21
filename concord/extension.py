@@ -52,7 +52,7 @@ class Extension:
         """Middleware list, associated with this extension, and that should be
         registered and applied on every event processing.
 
-        It's especially useful for sharing states between different extensions.
+        It is especially useful for sharing states between different extensions.
 
         .. note::
             Keep in mind, that this list can be requested multiple times as well
@@ -163,10 +163,10 @@ class Manager:
         return self._root_middleware_cache
 
     def is_extension_registered(self, extension: Type[Extension]) -> bool:
-        """Check extension in a list of registered extensions.
+        """Checks is extension registered in the manager.
 
         Args:
-            extension: Extension to register.
+            extension: Extension to check.
 
         Returns:
             ``True``, if extensions is registered, otherwise ``False``.
@@ -174,7 +174,7 @@ class Manager:
         return extension in self._extensions
 
     def register_extension(self, extension: Type[Extension]):
-        """Register extension in a manager.
+        """Register extension in the manager.
 
         Args:
             extension: Extension to register.
@@ -205,7 +205,7 @@ class Manager:
         )
 
     def unregister_extension(self, extension: Type[Extension]):
-        """Unregister extension in a manager.
+        """Unregister extension in the manager.
 
         Args:
             extension: Extension to unregister.
