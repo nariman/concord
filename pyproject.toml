@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "cncrd"
-version = "1.0.0"
+version = "0.10.1"
 description = "Middleware-based event processing library for Discord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/Roolat/concord"
+repository = "https://github.com/narimanized/concord"
 
 keywords = ["discord", "concord", "bot"]
 classifiers = [
