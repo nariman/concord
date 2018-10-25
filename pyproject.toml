@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "cncrd"
-version = "1.0.0"
+version = "0.10.1"
 description = "Middleware-based event processing library for Discord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/Roolat/concord"
+repository = "https://github.com/narimanized/concord"
 
 keywords = ["discord", "concord", "bot"]
 classifiers = [
@@ -35,7 +35,7 @@ pre-commit = "^1.11"
 pytest = "^3.8"
 pytest-asyncio = "^0.9.0"
 pytest-cov = "^2.5"
-sphinx = "^1.8"
+sphinx = "^1.7"
 sphinx_rtd_theme = "^0.4.2"
 sphinxcontrib-asyncio = "^0.2.0"
 sphinxcontrib-napoleon = "^0.7"

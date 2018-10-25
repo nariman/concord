@@ -3,7 +3,7 @@
 # We are using Poetry, which has no feature to export dependencies list yet...
 # Should be started from the project root.
 
-LOCK_FILE = "pyproject.lock"
+LOCK_FILE = "poetry.lock"
 REQUIREMENTS_FILE = "requirements.txt"
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ class Context:
         **kwargs: Keyword arguments, which was provided with event.
 
     Attributes:
-        client: A discord.py client instance.
+        client: The discord.py client instance.
         event: Event's type context is created for.
         args: Unnamed / positional arguments, which was provided with event.
         kwargs: Keyword arguments, which was provided with event.

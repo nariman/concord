@@ -32,18 +32,16 @@ from concord.context import Context
 class MiddlewareResult(enum.Enum):
     """Enum values for middleware results.
 
-    One of these values can be returned in a middleware instead of actual data.
-    Anything returned by a middleware and is not a enum value is considered as a
-    success of the process.
+    One of these values can be returned by a middleware instead of actual data.
+    Anything returned by the middleware and is not an enum value is considered
+    as successful result (``OK`` value).
     """
 
     OK = enum.auto()
     IGNORE = enum.auto()
 
 
-def is_successful_result(
-    value: Union[MiddlewareResult, Any]
-) -> bool:  # noqa: D401
+def is_successful_result(value: Union[MiddlewareResult, Any]) -> bool:
     """Returns ``True``, if given value is a successful middleware result."""
     if value == MiddlewareResult.IGNORE:
         return False
@@ -55,17 +53,18 @@ class Middleware(abc.ABC):
 
     Middleware are useful for filtering events or extending functionality.
 
-    Middleware should return something (even ``None``) to indicate success,
+    They could return something or nothing (``None``) to indicate success,
     otherwise :class:`MiddlewareResult` values can be used.
 
     Functions can also be converted into a middleware by using
     :class:`MiddlewareFunction` or :func:`as_middleware` decorator.
 
-    Args:
-        fn: The source function, when the last middleware in the middleware
-            chain is a converted function or it is a converted function itself.
-            Can be not presented, if middleware chain created not with
-            :func:`middleware` decorator.
+    Attributes:
+        fn: A source function, when a last middleware in a middleware chain is
+            a :class:`MiddlewareFunction` or it is the
+            :class:`MiddlewareFunction` itself.
+            Can be not present, if the middleware chain is created not with
+            :func:`middleware` decorator, or there is complex middleware tree.
 
             .. seealso::
                 :class:`MiddlewareChain`.
@@ -83,33 +82,26 @@ class Middleware(abc.ABC):
         """Middleware's main logic.
 
         .. note::
-            Context is a keyword parameter.
+            Context ``ctx`` and ``next`` callable are keyword parameters.
 
         Args:
             ctx: Event processing context.
 
                 .. note::
-                    Provided context can be replaced and passed to the next
-                    middleware, but do it only if needed.
+                    Provided context can be replaced and passed to the ``next``
+                    callable, but do it only if needed.
 
             next: The next function to call. Not necessarily a middleware. Pass
                 context, all positional and keyword parameters, even if unused.
-                Should be awaited.
-
-                .. warning::
-                    Context is a keyword parameter. If you will pass it as a
-                    positional parameter, this can cause errors on all next
-                    middleware in a chain.
+                Must be awaited.
 
         Returns:
-            Middleware data or enum value when no actual data can be provided.
+            Middleware data or :class:`MiddlewareResult` enum value.
         """
         pass  # pragma: no cover
 
     @staticmethod
-    def is_successful_result(
-        value: Union[MiddlewareResult, Any]
-    ) -> bool:  # noqa: D401
+    def is_successful_result(value: Union[MiddlewareResult, Any]) -> bool:
         """Returns ``True``, if given value is a successful middleware
         result."""
         return is_successful_result(value)
@@ -117,21 +109,21 @@ class Middleware(abc.ABC):
     async def __call__(
         self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:
-        """Invoke middleware with given parameters."""
+        """Invokes the middleware with given parameters."""
         return await self.run(*args, ctx=ctx, next=next, **kwargs)
 
 
 class MiddlewareFunction(Middleware):
-    """Middleware class for converting functions into valid middleware.
+    """Middleware to use function (any callable) as a valid middleware.
 
     Args:
-        fn: A function to convert into a middleware. Should be a coroutine.
+        fn: A function to use as a middleware. Should be a coroutine.
 
     Raises:
-        ValueError: If given function is not a coroutine.
+        ValueError: If the given function is not a coroutine.
 
     Attributes:
-        fn: A function converted into a middleware. A coroutine.
+        fn: The source function to use as a middleware. A coroutine.
     """
 
     def __init__(self, fn: Callable):
@@ -144,33 +136,33 @@ class MiddlewareFunction(Middleware):
     async def run(
         self, *args, ctx: Context, next: Callable, **kwargs
     ) -> Union[MiddlewareResult, Any]:
-        """Invoke function as a middleware with given parameters."""
         return await self.fn(*args, ctx=ctx, next=next, **kwargs)
 
 
 class MiddlewareState(Middleware):
-    """Middleware class that can provide a state for ``next`` function.
+    """Middleware that can provide a given state within a middleware tree.
 
     It is an alternative to middleware as class methods.
 
-    Every state will be saved in a context and could be found by the state type.
-    If you want to pass state as a parameter, provide a ``key`` parameter name.
+    Every state will be saved in a context and could be found by state's type
+    (see :meth:`get_state`). If you also want to pass the state as a parameter,
+    provide a ``key`` parameter name.
 
-    You can use :meth:`get_state` helper to get state from a context. It is
-    especially useful, when ``key`` is not provided.
+    You can use :meth:`get_state` helper to get the state from the context. It
+    is especially useful, when ``key`` is not provided.
 
-    If a class provided as a state, it will be instantiated on first middleware
-    run.
-    If a :class:`ContextState` subclass provided as a state, it will be
-    instantiated on every middleware run.
+    If a class provided as the state, it will be instantiated for you on first
+    middleware run.
+    If a :class:`ContextState` subclass provided as the state, it will be
+    instantiated for you on every middleware run.
 
     Args:
         state: A state to provide.
-        key: A parameter name, by which a state will be provided.
+        key: A parameter name, by which the state will be provided.
 
     Attributes:
-        state: A state for the ``next`` function.
-        key: A parameter name, by which a state will be provided as a
+        state: The state for providing.
+        key: The parameter name, by which the state will be provided as a
             parameter, if present.
     """
 
@@ -212,34 +204,35 @@ class MiddlewareState(Middleware):
     def get_state(
         ctx: Context, state_type: Type[StateType]
     ) -> Optional[StateType]:
-        """Return a state from the context."""
+        """Returns a state from the context."""
         MiddlewareState._ensure_context(ctx)
         return ctx.states.get(state_type)
 
     @staticmethod
     def set_state(ctx: Context, state: Any) -> None:
-        """Set the state to the context."""
+        """Sets the state to the context."""
         MiddlewareState._ensure_context(ctx)
         ctx.states[type(state)] = state
 
     @staticmethod
     def _ensure_context(ctx: Context) -> None:
-        """Check is context has states storage, and creates it if necessary."""
+        """Checks is the context has states storage, and creates it if
+        necessary."""
         if getattr(ctx, "states", None) is None:
             ctx.states = dict()
 
 
 class MiddlewareCollection(Middleware, abc.ABC):
-    """Class for grouping middleware. It is a middleware itself.
+    """Abstract class for grouping middleware. It is a middleware itself.
 
     Method :meth:`run` is abstract. Each subclass should implement own behavior
-    of how to run group of middleware. For example, run only one middleware, if
-    success, or run all middleware, or run middleware until desired results is
-    obtained, etc. Useful, when it is known, what middleware can return.
+    of how to run group of middleware. For example, run middleware in specific
+    order, run middleware until desired results is obtained, etc. Useful, when
+    it is known, what middleware can return.
 
     Attributes:
         collection: List of middleware to run. Take a note that order of
-            middleware in the list can be used in a subclass implementation.
+            middleware in the list can be used in an implementation.
     """
 
     collection: List[Middleware]
@@ -249,7 +242,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
         self.collection = []
 
     def add_middleware(self, middleware: Middleware) -> Middleware:
-        """Add middleware to the list.
+        """Adds middleware to the list.
 
         Can be used as a decorator.
 
@@ -257,7 +250,7 @@ class MiddlewareCollection(Middleware, abc.ABC):
             middleware: A middleware to add to the list.
 
         Returns:
-            A given middleware.
+            The given middleware.
 
         Raises:
             ValueError: If given parameter is not a middleware.
@@ -339,17 +332,17 @@ class MiddlewareSequence(MiddlewareCollection):
 
 
 def as_middleware(fn: Callable) -> MiddlewareFunction:
-    """Convert function into a middleware.
+    """Creates a middleware for given function (or any callable).
 
-    If you are planning to chain the converted function with another middleware,
-    just use :func:`middleware` helper. It will convert the function into a
-    middleware for you, if needed.
-
-    .. warning::
-        Do not use it, if not sure.
+    If you are planning to chain this function with another middleware, just use
+    :func:`middleware` helper. It will create a middleware from the function for
+    you, if needed.
 
     Args:
-        fn: A function to convert into a middleware.
+        fn: A function to use as a middleware.
+
+    Returns:
+        Middleware for given function.
     """
     # We don't care, when somebody is converting a middleware into another one...
     return MiddlewareFunction(fn)
@@ -359,14 +352,18 @@ def collection_of(
     collection_class: Type[MiddlewareCollection],
     middleware: Sequence[Union[Middleware, Callable]],
 ) -> MiddlewareCollection:
-    """Create a new collection of given middleware.
+    """Creates a new collection of given middleware.
 
-    If any of given parameters is not a middleware, it will be converted into a
-    middleware for you.
+    If any of given parameters is not a middleware, a middleware will be created
+    for it for you.
 
     Args:
         collection_class: A collection class to create collection of.
-        middleware: A list of middleware to create collection of.
+        middleware: List of middleware to create collection of.
+
+    Returns:
+        Instance of given collection class with the list of middleware in the
+        collection.
     """
     collection = collection_class()
 
@@ -381,13 +378,16 @@ def collection_of(
 def chain_of(
     middleware: Sequence[Union[Middleware, Callable]]
 ) -> MiddlewareChain:
-    """Create a new chain of given middleware.
+    """Creates a new chain (:class:`MiddlewareChain`) of given middleware.
 
-    If any of given parameters is not a middleware, it will be converted into a
-    middleware for you.
+    If any of given parameters is not a middleware, a middleware will be created
+    for it for you.
 
     Args:
-        middleware: A list of middleware to create chain of.
+        middleware: List of middleware to create chain of.
+
+    Returns:
+        Chain of given middleware.
     """
     return collection_of(MiddlewareChain, middleware)
 
@@ -395,22 +395,25 @@ def chain_of(
 def sequence_of(
     middleware: Sequence[Union[Middleware, Callable]]
 ) -> MiddlewareChain:
-    """Create a new sequence of given middleware.
+    """Creates a new sequence (:class:`MiddlewareSequence`) of given middleware.
 
-    If any of given parameters is not a middleware, it will be converted into a
-    middleware for you.
+    If any of given parameters is not a middleware, a middleware will be created
+    for it for you.
 
     Args:
         middleware: A list of middleware to create chain of.
+
+    Returns:
+        Sequence of given middleware.
     """
     return collection_of(MiddlewareSequence, middleware)
 
 
 def middleware(outer_middleware: Middleware):
-    """Append a middleware to the chain. Decorator.
+    """Appends a middleware to the chain. A decorator.
 
-    If decorated function is not a middleware, it will be converted into a
-    middleware by decorator.
+    If decorated function is not a middleware, a middleware will be created
+    for it by the decorator.
 
     Args:
         outer_middleware: A middleware to append to the chain.
@@ -432,7 +435,8 @@ def middleware(outer_middleware: Middleware):
 class OneOfAll(MiddlewareCollection):
     """Middleware collection with "first success" condition.
 
-    It processes middleware list until one of them returns successful result.
+    It processes the middleware list until one of them returns a successful
+    result.
 
     See :class:`Middleware` for information about successful results.
     """

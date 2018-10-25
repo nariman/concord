@@ -3,11 +3,8 @@
 Middleware-based event processing library for Discord. Uses
 [discord.py](https://github.com/Rapptz/discord.py) under the hood.
 
-[![Build Status](https://img.shields.io/travis/Roolat/concord/dev.svg?style=flat-square)](https://travis-ci.org/Roolat/concord)
-[![Codecov](https://img.shields.io/codecov/c/github/Roolat/concord/dev.svg?style=flat-square)](https://codecov.io/gh/Roolat/concord)
-[![LGTM total alerts](https://img.shields.io/lgtm/alerts/g/Roolat/concord.svg?style=flat-square)](https://lgtm.com/projects/g/Roolat/concord/alerts/)
-[![LGTM language grade: Python](https://img.shields.io/lgtm/grade/python/g/Roolat/concord.svg?style=flat-square)](https://lgtm.com/projects/g/Roolat/concord/context:python)
-![License](https://img.shields.io/github/license/Roolat/concord.svg?style=flat-square)
+[![Build Status](https://img.shields.io/travis/narimanized/concord/dev.svg?style=flat-square)](https://travis-ci.org/narimanized/concord)
+[![Codecov](https://img.shields.io/codecov/c/github/narimanized/concord/dev.svg?style=flat-square)](https://codecov.io/gh/narimanized/concord)
 
 Concord **is not** a library for accessing Discord API. If you're here for an
 API library, see [discord.py](https://github.com/Rapptz/discord.py) or
@@ -29,33 +26,20 @@ customization ability, it had to pay the speed.
 
 ## Example
 
-[Hugo](https://github.com/Roolat/Hugo) - example bot, built on the Concord. Take
-a note, that there's no so much code. It just registers extensions -
+[Hugo](https://github.com/narimanized/hugo) - example bot, built on the Concord.
+Take a note, that there's no so much code. It just registers extensions -
 third-party middleware sets.  
-Actually, Concord - is a successor of Hugo. You can figure this out by code
+Actually, Concord - is a successor of Hugo. You can figure this out by the code
 history.
 
 Example extensions:
-[concord-ext-audio](https://github.com/Roolat/concord-ext-audio),
-[concord-ext-stats](https://github.com/Roolat/concord-ext-stats).
+[concord-ext-audio](https://github.com/narimanized/concord-ext-audio),
+[concord-ext-player](https://github.com/narimanized/concord-ext-player),
+[concord-ext-stats](https://github.com/narimanized/concord-ext-stats).
 
 ## Installation
 
-You can install the latest version from PyPI:
-
-```bash
-pip install cncrd  # no vowels!
-```
-
-Take a note, that `cncrd` has no vowels. PyPI is the only place, where Concord
-is named as `cncrd`.  
-Also, by now, Concord has a specific requirement - `rewrite` branch of
-[discord.py](https://github.com/Rapptz/discord.py). Take care of installing
-it too.
-
-```bash
-pip install -U https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
-```
+#### Via Poetry
 
 Concord uses [Poetry](https://github.com/sdispater/poetry) for it's dependency
 management. You can add Concord to your project using Poetry:
@@ -64,10 +48,35 @@ management. You can add Concord to your project using Poetry:
 poetry add cncrd
 ```
 
-Poetry will handle the `discord.py` specific version for you.
+Poetry will handle the rest for you.
+
+Take a note, that `cncrd` has no vowels. Concord's and extensions' distribution
+name is`cncrd`.  
+
+#### Via `pip` / other package manager
+
+Concord is hosted on PyPI and can be installed via other package managers:
+
+```bash
+pip install cncrd
+```
+
+Concord has a specific requirement - `rewrite` branch of
+[discord.py](https://github.com/Rapptz/discord.py) that is handled by Poetry,
+but not by other package managers. Take care of installing it too:
+
+```bash
+pip install -U https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
+```
+
+#### Development
 
 Concord's development version is located in the `dev` branch, and, in most
 cases, it's a pretty stable to use in case you're a bot developer.
+
+```bash
+poetry add cncrd --git https://github.com/narimanized/concord
+```
 
 ## Documentation
 
