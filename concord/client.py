@@ -65,7 +65,7 @@ class Client(discord.Client):
 
         self.loop.create_task(
             self._run_event(
-                self.extension_manager.root_middleware.run,
+                self.extension_manager.run,
                 event,
                 ctx=ctx,
                 next=empty_next_callable,

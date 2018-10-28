@@ -33,6 +33,7 @@ from concord.middleware import (
     MiddlewareSequence,
     MiddlewareState,
     as_middleware,
+    chain_of,
 )
 
 
@@ -46,11 +47,11 @@ def extension():
 
     @as_middleware
     async def first_mw(*args, ctx, next, **kwargs):
-        pass
+        return await next(*args, ctx=ctx, **kwargs)
 
     @as_middleware
     async def second_mw(*args, ctx, next, **kwargs):
-        pass
+        return await next(*args, ctx=ctx, **kwargs)
 
     class SomeExtension(Extension):
         on_register_called = False
@@ -59,8 +60,7 @@ def extension():
         def __init__(self):
             self._client_middleware = [MiddlewareState(FirstState), first_mw]
             self._extension_middleware = [
-                MiddlewareState(SecondState),
-                second_mw,
+                chain_of([MiddlewareState(SecondState), second_mw])
             ]
 
         @property
@@ -144,3 +144,18 @@ def test_registering_and_unregistering_constraints(extension):
     manager.register_extension(extension)
     with pytest.raises(ExtensionManagerError):
         manager.register_extension(extension)
+
+
+@pytest.mark.asyncio
+async def test_running_behaviour(extension, context, sample_parameters):
+    sa, skwa = sample_parameters
+    manager = Manager()
+    manager.register_extension(extension)
+
+    async def next(*args, ctx, **kwargs):
+        assert ctx == context
+        assert list(args) == sa
+        assert kwargs == skwa
+        return 42
+
+    assert await manager.run(*sa, ctx=context, next=next, **skwa) == (42,)

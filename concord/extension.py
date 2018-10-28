@@ -22,14 +22,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import logging
-from typing import Dict, Sequence, Type, Optional
+from typing import Dict, Sequence, Type, Optional, Callable, Union, Any
 
+from concord.context import Context
 from concord.exceptions import ExtensionManagerError
 from concord.middleware import (
     Middleware,
     MiddlewareChain,
     chain_of,
     sequence_of,
+    MiddlewareResult,
 )
 
 
@@ -86,8 +88,8 @@ class Extension:
     def on_register(self, manager: "Manager"):
         """Listener invoked on registering extension in a manager.
 
-        If there's global states and middleware, associated with this extension,
-        all of this will be registered after invoking this listener.
+        If there is global states and middleware, associated with this
+        extension, all of this will be registered after invoking this listener.
 
         Args:
             manager: Manager instance where extension has been registered.
@@ -97,8 +99,9 @@ class Extension:
     def on_unregister(self, manager: "Manager"):
         """Listener invoked on unregistering extension in a manager.
 
-        If there's global states and middleware, associated with this extension,
-        all of this is already unregistered before invoking this listener.
+        If there is global states and middleware, associated with this
+        extension, all of this is already unregistered before invoking this
+        listener.
 
         Args:
             manager: Manager instance where extension has been unregistered.
@@ -106,8 +109,8 @@ class Extension:
         pass  # pragma: no cover
 
 
-class Manager:
-    """Extension manager.
+class Manager(Middleware):
+    """Extension manager. It is a middleware itself.
 
     Attributes:
         _extensions: List of registered extensions. Key is an extension class
@@ -174,7 +177,7 @@ class Manager:
         return extension in self._extensions
 
     def register_extension(self, extension: Type[Extension]):
-        """Register extension in the manager.
+        """Registers extension in the manager.
 
         Args:
             extension: Extension to register.
@@ -205,7 +208,7 @@ class Manager:
         )
 
     def unregister_extension(self, extension: Type[Extension]):
-        """Unregister extension in the manager.
+        """Unregisters extension in the manager.
 
         Args:
             extension: Extension to unregister.
@@ -232,4 +235,11 @@ class Manager:
         log.info(
             f'Extension "{extension.NAME} "'
             f"(version {extension.VERSION}) has been unregistered"
+        )
+
+    async def run(
+        self, *args, ctx: Context, next: Callable, **kwargs
+    ) -> Union[MiddlewareResult, Any]:
+        return await self.root_middleware.run(
+            *args, ctx=ctx, next=next, **kwargs
         )
