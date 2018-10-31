@@ -3,8 +3,8 @@
 Middleware-based event processing library for Discord. Uses
 [discord.py](https://github.com/Rapptz/discord.py) under the hood.
 
-[![Build Status](https://img.shields.io/travis/narimanized/concord/dev.svg?style=flat-square)](https://travis-ci.org/narimanized/concord)
-[![Codecov](https://img.shields.io/codecov/c/github/narimanized/concord/dev.svg?style=flat-square)](https://codecov.io/gh/narimanized/concord)
+[![Build Status](https://img.shields.io/travis/narimanizett/concord/dev.svg?style=flat-square)](https://travis-ci.org/narimanizett/concord)
+[![Codecov](https://img.shields.io/codecov/c/github/narimanizett/concord/dev.svg?style=flat-square)](https://codecov.io/gh/narimanizett/concord)
 
 Concord **is not** a library for accessing Discord API. If you're here for an
 API library, see [discord.py](https://github.com/Rapptz/discord.py) or
@@ -26,16 +26,16 @@ customization ability, it had to pay the speed.
 
 ## Example
 
-[Hugo](https://github.com/narimanized/hugo) - example bot, built on the Concord.
+[Hugo](https://github.com/narimanizett/hugo) - example bot, built on the Concord.
 Take a note, that there's no so much code. It just registers extensions -
 third-party middleware sets.  
 Actually, Concord - is a successor of Hugo. You can figure this out by the code
 history.
 
 Example extensions:
-[concord-ext-audio](https://github.com/narimanized/concord-ext-audio),
-[concord-ext-player](https://github.com/narimanized/concord-ext-player),
-[concord-ext-stats](https://github.com/narimanized/concord-ext-stats).
+[concord-ext-audio](https://github.com/narimanizett/concord-ext-audio),
+[concord-ext-player](https://github.com/narimanizett/concord-ext-player),
+[concord-ext-stats](https://github.com/narimanizett/concord-ext-stats).
 
 ## Installation
 
@@ -75,7 +75,7 @@ Concord's development version is located in the `dev` branch, and, in most
 cases, it's a pretty stable to use in case you're a bot developer.
 
 ```bash
-poetry add cncrd --git https://github.com/narimanized/concord
+poetry add cncrd --git https://github.com/narimanizett/concord
 ```
 
 ## Documentation
