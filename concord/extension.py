@@ -126,6 +126,7 @@ class Manager(Middleware):
     _root_middleware_cache: Optional[Middleware]
 
     def __init__(self):
+        super().__init__()
         self._extensions = {}
         self._client_middleware_cache = None
         self._extension_middleware_cache = None

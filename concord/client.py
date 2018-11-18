@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 class Client(discord.Client):
     """Wrapper around default discord.py library client.
 
-    Args:
+    Attributes:
         extension_manager: Extension manager instance associated with this
             client.
     """
