@@ -28,7 +28,7 @@ python = "^3.6"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite" }
 
 [tool.poetry.dev-dependencies]
-black = "^18.9b0"
+black = "^19.3b0"
 codecov = "^2.0"
 coverage = "^4.5"
 pre-commit = "^1.11"
